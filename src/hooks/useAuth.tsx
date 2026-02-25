@@ -31,7 +31,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true)
 
     const fetchOrgMember = async (userId: string) => {
-        const { data } = await supabase
+        console.log('Fetching org member for user_id:', userId)
+        const { data, error } = await supabase
             .from('org_members')
             .select('id, org_id, role, display_name, email, can_be_booked, organizations(id, name, slug, type)')
             .eq('user_id', userId)
@@ -39,62 +40,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .limit(1)
             .single()
 
-        if (data) {
-            setOrgMember(data as unknown as OrgMember)
+        if (error) {
+            console.error('Error fetching orgMember:', error)
         }
+
+        if (data) {
+            console.log('Org member found:', data)
+            setOrgMember(data as unknown as OrgMember)
+        } else {
+            console.warn('No org member found for user_id:', userId)
+            setOrgMember(null)
+        }
+
+        // Explicitly clear loading right after fetch finishes
+        setLoading(false)
     }
 
     useEffect(() => {
         let mounted = true
+        let authInitializing = true
 
-        const initAuth = async () => {
+        const checkSession = async () => {
             try {
                 const { data: { session }, error } = await supabase.auth.getSession()
-                if (error) console.error('Auth getSession error:', error)
+                if (error) throw error
 
                 if (mounted) {
                     setSession(session)
                     setUser(session?.user ?? null)
-                }
 
-                if (session?.user) {
-                    await fetchOrgMember(session.user.id)
+                    if (session?.user) {
+                        await fetchOrgMember(session.user.id)
+                    } else {
+                        setLoading(false)
+                    }
                 }
             } catch (err) {
-                console.error('Unexpected error during auth initialization:', err)
-            } finally {
+                console.error('Auth check error:', err)
                 if (mounted) setLoading(false)
+            } finally {
+                authInitializing = false
             }
         }
 
-        initAuth()
+        checkSession()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            try {
-                if (mounted) {
-                    setSession(session)
-                    setUser(session?.user ?? null)
-                }
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+            if (!mounted) return
 
-                if (session?.user) {
-                    await fetchOrgMember(session.user.id)
+            setSession(newSession)
+            setUser(newSession?.user ?? null)
+
+            // Only run the fetch on state change if we aren't currently in the initial load
+            if (!authInitializing) {
+                if (newSession?.user) {
+                    // Set loading true while fetching new org member on auth change
+                    setLoading(true)
+                    await fetchOrgMember(newSession.user.id)
                 } else {
-                    if (mounted) setOrgMember(null)
+                    setOrgMember(null)
+                    setLoading(false)
                 }
-            } catch (err) {
-                console.error('Error during auth state change:', err)
-            } finally {
-                if (mounted) setLoading(false)
             }
         })
 
-        // Failsafe: if Supabase completely hangs, force loading to false after 3 seconds
         const failsafeTimeout = setTimeout(() => {
             if (mounted && loading) {
                 console.warn('Auth initialization timed out. Forcing loading to false.')
                 setLoading(false)
             }
-        }, 3000)
+        }, 5000) // Increased to 5s just in case network is slow
 
         return () => {
             mounted = false
