@@ -15,14 +15,7 @@ import { SettingsPage } from '@/pages/Settings'
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const { user, orgMember, loading } = useAuth()
 
-    if (loading) {
-        return (
-            <div className="loading-screen">
-                <div className="spinner" />
-                <span style={{ color: 'var(--color-text-tertiary)' }}>Cargando...</span>
-            </div>
-        )
-    }
+    if (loading) return null
 
     if (!user) return <Navigate to="/login" replace />
 
@@ -35,13 +28,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function OnboardingRoute({ children }: { children: React.ReactNode }) {
     const { user, orgMember, loading } = useAuth()
 
-    if (loading) {
-        return (
-            <div className="loading-screen">
-                <div className="spinner" />
-            </div>
-        )
-    }
+    if (loading) return null
 
     if (!user) return <Navigate to="/login" replace />
 
@@ -53,13 +40,8 @@ function OnboardingRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuth()
-    if (loading) {
-        return (
-            <div className="loading-screen">
-                <div className="spinner" />
-            </div>
-        )
-    }
+
+    if (loading) return null
     if (user) return <Navigate to="/" replace />
     return <>{children}</>
 }
