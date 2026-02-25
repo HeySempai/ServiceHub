@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null)
     const [orgMember, setOrgMember] = useState<OrgMember | null>(null)
     const [loading, setLoading] = useState(true)
+    const currentUserRef = useRef<string | null>(null)
 
     const fetchOrgMember = async (userId: string) => {
         console.log('Fetching org member for user_id:', userId)
@@ -66,12 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (error) throw error
 
                 if (mounted) {
-                    const isSameUser = session?.user?.id === user?.id
+                    const isSameUser = session?.user?.id === currentUserRef.current
 
                     setSession(session)
                     setUser(session?.user ?? null)
 
                     if (session?.user) {
+                        currentUserRef.current = session.user.id
                         if (!isSameUser || !orgMember) {
                             await fetchOrgMember(session.user.id)
                         } else {
@@ -79,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             setLoading(false)
                         }
                     } else {
+                        currentUserRef.current = null
                         setLoading(false)
                     }
                 }
@@ -97,12 +100,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // Only run if we aren't currently in the initial load
             if (!authInitializing) {
-                const isSameUser = newSession?.user?.id === session?.user?.id;
+                const isSameUser = newSession?.user?.id === currentUserRef.current;
 
                 setSession(newSession)
                 setUser(newSession?.user ?? null)
 
                 if (newSession?.user) {
+                    currentUserRef.current = newSession.user.id
                     // If it's the exact same user (e.g., token refresh or tab focus), 
                     // DO NOT block the UI with loading=true. We already have their orgMember in memory.
                     // If we don't have an orgMember yet, or it's a completely new user logging in, fetch it.
@@ -115,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     }
                 } else {
                     // User logged out
+                    currentUserRef.current = null
                     setOrgMember(null)
                     setLoading(false)
                 }
@@ -133,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             clearTimeout(failsafeTimeout)
             subscription.unsubscribe()
         }
-    }, [])
+    }, [orgMember])
 
     const signIn = async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
