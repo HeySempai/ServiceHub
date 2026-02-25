@@ -213,7 +213,7 @@ export function SettingsPage() {
         setGoogleConnecting(true)
         try {
             const { data, error } = await supabase.functions.invoke('google-auth-init', {
-                method: 'GET',
+                method: 'POST',
             })
 
             if (error) throw error
