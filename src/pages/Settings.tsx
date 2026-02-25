@@ -210,23 +210,18 @@ export function SettingsPage() {
     }
 
     const handleGoogleConnect = async () => {
-        if (!session) return
         setGoogleConnecting(true)
         try {
-            const res = await fetch(
-                'https://jblooqpgetighjenbvaf.supabase.co/functions/v1/google-auth-init',
-                {
-                    headers: {
-                        Authorization: `Bearer ${session.access_token}`,
-                        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpibG9vcXBnZXRpZ2hqZW5idmFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5ODg0NzgsImV4cCI6MjA4NzU2NDQ3OH0.5fM6ykpO_c57--9aedcD7U1LQIPPEAFMYo0sRr4Z2Nw',
-                    },
-                }
-            )
-            const data = await res.json()
-            if (data.url) {
+            const { data, error } = await supabase.functions.invoke('google-auth-init', {
+                method: 'GET',
+            })
+
+            if (error) throw error
+
+            if (data?.url) {
                 window.location.href = data.url
             } else {
-                console.error('Google init response:', data)
+                console.error('Google init response missing URL:', data)
             }
         } catch (err) {
             console.error('Google connect error:', err)
