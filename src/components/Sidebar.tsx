@@ -1,0 +1,101 @@
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuth'
+import {
+    LayoutDashboard,
+    Users,
+    Calendar,
+    Scissors,
+    FileText,
+    CreditCard,
+    Receipt,
+    Settings,
+    LogOut,
+} from 'lucide-react'
+
+const navItems = [
+    { label: 'Agenda', to: '/bookings', icon: Calendar },
+    { label: 'Clientes', to: '/clients', icon: Users },
+    { label: 'Servicios', to: '/services', icon: Scissors },
+]
+
+const financeItems = [
+    { label: 'Facturas', to: '/invoices', icon: FileText },
+    { label: 'Pagos', to: '/payments', icon: CreditCard },
+    { label: 'Gastos', to: '/expenses', icon: Receipt },
+]
+
+export function Sidebar() {
+    const { user, orgMember, signOut } = useAuth()
+    const navigate = useNavigate()
+
+    const handleSignOut = async () => {
+        await signOut()
+        navigate('/login')
+    }
+
+    const initials = orgMember?.display_name
+        ?.split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2) || 'U'
+
+    return (
+        <aside className="sidebar">
+            <div className="sidebar-header">
+                <div className="sidebar-logo">S</div>
+                <div className="sidebar-brand">
+                    <h1>ServiceHub</h1>
+                    <span>{orgMember?.organizations?.name || 'Mi Negocio'}</span>
+                </div>
+            </div>
+
+            <nav className="sidebar-nav">
+                <span className="sidebar-section-label">General</span>
+                <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                    <LayoutDashboard />
+                    <span>Dashboard</span>
+                </NavLink>
+                {navItems.map((item) => (
+                    <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <item.icon />
+                        <span>{item.label}</span>
+                    </NavLink>
+                ))}
+
+                <span className="sidebar-section-label">Finanzas</span>
+                {financeItems.map((item) => (
+                    <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <item.icon />
+                        <span>{item.label}</span>
+                    </NavLink>
+                ))}
+
+                <span className="sidebar-section-label">Sistema</span>
+                <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                    <Settings />
+                    <span>Configuración</span>
+                </NavLink>
+            </nav>
+
+            <div className="sidebar-footer">
+                <div className="user-info" onClick={handleSignOut} title="Cerrar sesión">
+                    <div className="user-avatar">{initials}</div>
+                    <div className="user-details">
+                        <span className="name">{orgMember?.display_name || user?.email}</span>
+                        <span className="role">{orgMember?.role || 'usuario'}</span>
+                    </div>
+                    <LogOut style={{ width: 16, height: 16, marginLeft: 'auto', opacity: 0.4 }} />
+                </div>
+            </div>
+        </aside>
+    )
+}

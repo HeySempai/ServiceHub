@@ -1,0 +1,530 @@
+import { useEffect, useState, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
+import { Save, Check, Upload, UserPlus, X, Mail, Calendar, ExternalLink, Loader } from 'lucide-react'
+
+const BUSINESS_TYPES = [
+    { value: 'clinic', label: 'Clínica' },
+    { value: 'barbershop', label: 'Barbería' },
+    { value: 'salon', label: 'Salón de Belleza' },
+    { value: 'spa', label: 'Spa' },
+    { value: 'dental', label: 'Dental' },
+    { value: 'gym', label: 'Gimnasio' },
+    { value: 'veterinary', label: 'Veterinaria' },
+    { value: 'consulting', label: 'Consultoría' },
+    { value: 'general', label: 'Otro' },
+]
+
+const TIMEZONES = [
+    { value: 'America/Mexico_City', label: 'Ciudad de México / Monterrey — Hora Central (UTC-6)' },
+    { value: 'America/Cancun', label: 'Cancún / Chetumal — Hora del Sureste (UTC-5)' },
+    { value: 'America/Mazatlan', label: 'Mazatlán / Sinaloa — Hora del Pacífico (UTC-7)' },
+    { value: 'America/Tijuana', label: 'Tijuana / Baja California — Hora del Noroeste (UTC-8)' },
+    { value: 'America/Chihuahua', label: 'Chihuahua / Ciudad Juárez — Hora de la Montaña (UTC-7)' },
+    { value: 'America/Hermosillo', label: 'Hermosillo / Sonora — Hora de la Montaña sin DST (UTC-7)' },
+]
+
+export function SettingsPage() {
+    const { orgMember, user, session } = useAuth()
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    // Profile form
+    const [displayName, setDisplayName] = useState('')
+    const [email, setEmail] = useState('')
+    const [canBeBooked, setCanBeBooked] = useState(true)
+    const [profileSaving, setProfileSaving] = useState(false)
+    const [profileSaved, setProfileSaved] = useState(false)
+
+    // Org form
+    const [orgName, setOrgName] = useState('')
+    const [orgType, setOrgType] = useState('')
+    const [orgTimezone, setOrgTimezone] = useState('')
+    const [logoUrl, setLogoUrl] = useState<string | null>(null)
+    const [orgSaving, setOrgSaving] = useState(false)
+    const [orgSaved, setOrgSaved] = useState(false)
+    const [uploading, setUploading] = useState(false)
+
+    // Team
+    const [teamMembers, setTeamMembers] = useState<any[]>([])
+    const [showInvite, setShowInvite] = useState(false)
+    const [inviteEmail, setInviteEmail] = useState('')
+    const [inviteRole, setInviteRole] = useState('staff')
+    const [inviteName, setInviteName] = useState('')
+    const [inviting, setInviting] = useState(false)
+    const [inviteSuccess, setInviteSuccess] = useState(false)
+
+    // Google integration
+    const [googleConnected, setGoogleConnected] = useState(false)
+    const [googleEmail, setGoogleEmail] = useState<string | null>(null)
+    const [googleConnecting, setGoogleConnecting] = useState(false)
+    const [googleSuccess, setGoogleSuccess] = useState(false)
+
+    useEffect(() => {
+        if (!orgMember) return
+        setDisplayName(orgMember.display_name || '')
+        setEmail(orgMember.email || user?.email || '')
+        setCanBeBooked(orgMember.can_be_booked)
+
+        // Fetch org details
+        supabase.from('organizations')
+            .select('name, type, timezone, logo_url')
+            .eq('id', orgMember.org_id)
+            .single()
+            .then(({ data }) => {
+                if (data) {
+                    setOrgName(data.name)
+                    setOrgType(data.type || 'general')
+                    setOrgTimezone(data.timezone || 'America/Mexico_City')
+                    setLogoUrl(data.logo_url)
+                }
+            })
+
+        // Fetch team members
+        supabase.from('org_members')
+            .select('id, display_name, email, role, can_be_booked, active')
+            .eq('org_id', orgMember.org_id)
+            .eq('active', true)
+            .order('role')
+            .then(({ data }) => setTeamMembers(data || []))
+
+        // Check Google connection
+        supabase.from('calendar_connections')
+            .select('id, account_email')
+            .eq('org_id', orgMember.org_id)
+            .eq('provider', 'google')
+            .limit(1)
+            .then(({ data }) => {
+                if (data && data.length > 0) {
+                    setGoogleConnected(true)
+                    setGoogleEmail(data[0].account_email)
+                }
+            })
+
+        // Handle ?google=success redirect
+        if (searchParams.get('google') === 'success') {
+            setGoogleSuccess(true)
+            setGoogleConnected(true)
+            setSearchParams({}, { replace: true })
+            setTimeout(() => setGoogleSuccess(false), 4000)
+            // Re-fetch to get email
+            supabase.from('calendar_connections')
+                .select('account_email')
+                .eq('org_id', orgMember.org_id)
+                .eq('provider', 'google')
+                .limit(1)
+                .single()
+                .then(({ data }) => {
+                    if (data) setGoogleEmail(data.account_email)
+                })
+        }
+    }, [orgMember, user])
+
+    const handleSaveProfile = async () => {
+        if (!orgMember) return
+        setProfileSaving(true)
+        await supabase.from('org_members')
+            .update({ display_name: displayName, email, can_be_booked: canBeBooked })
+            .eq('id', orgMember.id)
+        setProfileSaving(false)
+        setProfileSaved(true)
+        setTimeout(() => setProfileSaved(false), 2000)
+    }
+
+    const handleSaveOrg = async () => {
+        if (!orgMember) return
+        setOrgSaving(true)
+        await supabase.from('organizations')
+            .update({ name: orgName, type: orgType, timezone: orgTimezone })
+            .eq('id', orgMember.org_id)
+        setOrgSaving(false)
+        setOrgSaved(true)
+        setTimeout(() => setOrgSaved(false), 2000)
+    }
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file || !orgMember) return
+        setUploading(true)
+
+        const ext = file.name.split('.').pop()
+        const filePath = `${orgMember.org_id}/logo.${ext}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('logos')
+            .upload(filePath, file, { upsert: true })
+
+        if (!uploadError) {
+            const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(filePath)
+            await supabase.from('organizations')
+                .update({ logo_url: publicUrl })
+                .eq('id', orgMember.org_id)
+            setLogoUrl(publicUrl + '?t=' + Date.now())
+        }
+        setUploading(false)
+    }
+
+    const handleInvite = async () => {
+        if (!orgMember || !inviteEmail) return
+        setInviting(true)
+
+        // Create the user via sign-up (they'll get an email to set their password)
+        // For now, we pre-create the org_member record so when they log in, they're assigned
+        const { data: existingUser } = await supabase
+            .from('org_members')
+            .select('id')
+            .eq('org_id', orgMember.org_id)
+            .eq('email', inviteEmail)
+            .limit(1)
+
+        if (existingUser && existingUser.length > 0) {
+            setInviting(false)
+            return
+        }
+
+        // Insert a pending member (no user_id yet — they'll claim it on sign up)
+        await supabase.from('org_members').insert({
+            org_id: orgMember.org_id,
+            user_id: null as unknown as string,
+            role: inviteRole,
+            display_name: inviteName || inviteEmail.split('@')[0],
+            email: inviteEmail,
+            can_be_booked: true,
+            active: true,
+        })
+
+        setInviting(false)
+        setInviteSuccess(true)
+        setInviteEmail('')
+        setInviteName('')
+        setTimeout(() => setInviteSuccess(false), 3000)
+
+        // Refresh team
+        const { data } = await supabase.from('org_members')
+            .select('id, display_name, email, role, can_be_booked, active')
+            .eq('org_id', orgMember.org_id)
+            .eq('active', true)
+            .order('role')
+        setTeamMembers(data || [])
+    }
+
+    const handleGoogleConnect = async () => {
+        if (!session) return
+        setGoogleConnecting(true)
+        try {
+            const res = await fetch(
+                'https://jblooqpgetighjenbvaf.supabase.co/functions/v1/google-auth-init',
+                {
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`,
+                        apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpibG9vcXBnZXRpZ2hqZW5idmFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5ODg0NzgsImV4cCI6MjA4NzU2NDQ3OH0.5fM6ykpO_c57--9aedcD7U1LQIPPEAFMYo0sRr4Z2Nw',
+                    },
+                }
+            )
+            const data = await res.json()
+            if (data.url) {
+                window.location.href = data.url
+            } else {
+                console.error('Google init response:', data)
+            }
+        } catch (err) {
+            console.error('Google connect error:', err)
+        }
+        setGoogleConnecting(false)
+    }
+
+    const isOwner = orgMember?.role === 'owner'
+    const isAdminOrOwner = orgMember?.role === 'owner' || orgMember?.role === 'admin'
+
+    const roleLabels: Record<string, string> = {
+        owner: 'Dueño', admin: 'Admin', staff: 'Staff',
+    }
+
+    return (
+        <div className="animate-in">
+            <div className="page-header">
+                <h2>Configuración</h2>
+                <p>Administra tu cuenta, equipo e integraciones</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+                {/* Profile Card */}
+                <div className="card">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
+                        <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Perfil</h3>
+                        <button
+                            className={`btn ${profileSaved ? 'btn-ghost' : 'btn-primary'} btn-sm`}
+                            onClick={handleSaveProfile}
+                            disabled={profileSaving}
+                        >
+                            {profileSaved ? <><Check size={14} /> Guardado</> : profileSaving ? <span className="spinner" /> : <><Save size={14} /> Guardar</>}
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                        <div className="form-group">
+                            <label className="form-label">Nombre</label>
+                            <input className="form-input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Correo electrónico</label>
+                            <input className="form-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        </div>
+                        <div className="form-group">
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', cursor: 'pointer', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                                <input type="checkbox" checked={canBeBooked} onChange={(e) => setCanBeBooked(e.target.checked)} style={{ accentColor: 'var(--color-accent)' }} />
+                                Puede recibir citas (aparece en Agenda)
+                            </label>
+                        </div>
+                        <div style={{ padding: 'var(--space-sm) var(--space-md)', background: 'var(--color-glass)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-tertiary)' }}>Rol</span>
+                            <span className="badge badge-confirmed">{roleLabels[orgMember?.role || ''] || orgMember?.role}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Organization Card */}
+                <div className="card">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
+                        <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Negocio</h3>
+                        {isOwner && (
+                            <button
+                                className={`btn ${orgSaved ? 'btn-ghost' : 'btn-primary'} btn-sm`}
+                                onClick={handleSaveOrg}
+                                disabled={orgSaving}
+                            >
+                                {orgSaved ? <><Check size={14} /> Guardado</> : orgSaving ? <span className="spinner" /> : <><Save size={14} /> Guardar</>}
+                            </button>
+                        )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                        {/* Logo */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                            <div
+                                onClick={() => isOwner && fileInputRef.current?.click()}
+                                style={{
+                                    width: 64, height: 64,
+                                    borderRadius: 'var(--radius-lg)',
+                                    background: logoUrl ? `url(${logoUrl}) center/cover` : 'var(--color-accent-soft)',
+                                    border: '2px dashed var(--color-glass-border)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: isOwner ? 'pointer' : 'default',
+                                    transition: 'all var(--transition-fast)',
+                                    flexShrink: 0,
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                {!logoUrl && (
+                                    uploading
+                                        ? <span className="spinner" />
+                                        : <Upload size={20} style={{ color: 'var(--color-accent)' }} />
+                                )}
+                            </div>
+                            <div>
+                                <p style={{ fontSize: 'var(--font-size-sm)', fontWeight: 500 }}>
+                                    {logoUrl ? 'Logo del negocio' : 'Agregar logo'}
+                                </p>
+                                <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>
+                                    {isOwner ? 'Click para subir (PNG, JPG)' : 'Solo el dueño puede cambiar el logo'}
+                                </p>
+                            </div>
+                            <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleLogoUpload} />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Nombre del negocio</label>
+                            <input className="form-input" value={orgName} onChange={(e) => setOrgName(e.target.value)} disabled={!isOwner} />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Tipo de negocio</label>
+                            <select className="form-select" value={orgType} onChange={(e) => setOrgType(e.target.value)} disabled={!isOwner}>
+                                {BUSINESS_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Zona horaria</label>
+                            <select className="form-select" value={orgTimezone} onChange={(e) => setOrgTimezone(e.target.value)} disabled={!isOwner}>
+                                {TIMEZONES.map((tz) => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Team Section */}
+            <div className="card" style={{ marginTop: 'var(--space-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
+                    <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Equipo</h3>
+                    {isAdminOrOwner && (
+                        <button className="btn btn-primary btn-sm" onClick={() => setShowInvite(!showInvite)}>
+                            {showInvite ? <><X size={14} /> Cerrar</> : <><UserPlus size={14} /> Invitar miembro</>}
+                        </button>
+                    )}
+                </div>
+
+                {/* Invite Form */}
+                {showInvite && (
+                    <div style={{
+                        padding: 'var(--space-md)',
+                        background: 'var(--color-accent-soft)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--color-accent)',
+                        marginBottom: 'var(--space-lg)',
+                    }}>
+                        {inviteSuccess && (
+                            <div style={{
+                                padding: 'var(--space-sm) var(--space-md)',
+                                background: 'var(--color-success-soft)',
+                                borderRadius: 'var(--radius-md)',
+                                color: 'var(--color-success)',
+                                fontSize: 'var(--font-size-sm)',
+                                marginBottom: 'var(--space-md)',
+                                display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
+                            }}>
+                                <Check size={14} /> Miembro agregado al equipo
+                            </div>
+                        )}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 'var(--space-sm)' }}>
+                            <div className="form-group">
+                                <label className="form-label">Nombre</label>
+                                <input className="form-input" placeholder="Nombre del miembro" value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Correo electrónico</label>
+                                <input className="form-input" type="email" placeholder="correo@ejemplo.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Rol</label>
+                                <select className="form-select" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
+                                    <option value="staff">Staff</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button
+                            className="btn btn-primary btn-sm"
+                            style={{ marginTop: 'var(--space-sm)' }}
+                            onClick={handleInvite}
+                            disabled={inviting || !inviteEmail}
+                        >
+                            {inviting ? <span className="spinner" /> : <><Mail size={14} /> Agregar al equipo</>}
+                        </button>
+                    </div>
+                )}
+
+                {/* Team List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                    {teamMembers.map((m) => (
+                        <div key={m.id} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: 'var(--space-sm) var(--space-md)',
+                            borderRadius: 'var(--radius-md)',
+                            background: m.id === orgMember?.id ? 'var(--color-accent-soft)' : 'var(--color-glass)',
+                            border: m.id === orgMember?.id ? '1px solid var(--color-accent)' : '1px solid transparent',
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                                <div style={{
+                                    width: 36, height: 36,
+                                    borderRadius: 'var(--radius-full)',
+                                    background: 'var(--color-accent)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontWeight: 600, fontSize: 'var(--font-size-sm)', color: 'white',
+                                }}>
+                                    {(m.display_name || '?')[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <p style={{ fontWeight: 500, fontSize: 'var(--font-size-sm)' }}>
+                                        {m.display_name} {m.id === orgMember?.id && <span style={{ color: 'var(--color-text-tertiary)' }}>(tú)</span>}
+                                    </p>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>{m.email}</p>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                                {m.can_be_booked && <span className="badge badge-scheduled" style={{ fontSize: '10px' }}>Agenda</span>}
+                                <span className={`badge ${m.role === 'owner' ? 'badge-completed' : m.role === 'admin' ? 'badge-confirmed' : 'badge-draft'}`}>
+                                    {roleLabels[m.role] || m.role}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Google Integration */}
+            <div className="card" style={{ marginTop: 'var(--space-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
+                    <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Integraciones</h3>
+                </div>
+
+                <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: 'var(--space-md)',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--color-glass)',
+                    border: `1px solid ${googleConnected ? 'var(--color-success)' : 'var(--color-glass-border)'}`,
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                        <div style={{
+                            width: 44, height: 44,
+                            borderRadius: 'var(--radius-md)',
+                            background: '#fff',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '1.5rem',
+                        }}>
+                            <svg width="24" height="24" viewBox="0 0 24 24">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>Google Workspace</p>
+                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>
+                                Google Calendar · Gmail · Sincronización bidireccional de citas
+                            </p>
+                        </div>
+                    </div>
+                    {googleConnected ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                            {googleEmail && <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{googleEmail}</span>}
+                            <span className="badge badge-completed"><Check size={12} /> Conectado</span>
+                        </div>
+                    ) : (
+                        <button className="btn btn-primary btn-sm" onClick={handleGoogleConnect} disabled={googleConnecting}>
+                            {googleConnecting ? <><Loader size={14} className="spin" /> Conectando...</> : <><ExternalLink size={14} /> Conectar</>}
+                        </button>
+                    )}
+                </div>
+
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
+                    padding: 'var(--space-md)',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--color-glass)',
+                    border: '1px solid var(--color-glass-border)',
+                    marginTop: 'var(--space-sm)',
+                    opacity: 0.6,
+                }}>
+                    <div style={{
+                        width: 44, height: 44,
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-glass)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                        <Calendar size={22} style={{ color: 'var(--color-text-tertiary)' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <p style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>Más integraciones</p>
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>
+                            WhatsApp Business, Stripe, MercadoPago — próximamente
+                        </p>
+                    </div>
+                    <span className="badge badge-draft">Próximamente</span>
+                </div>
+            </div>
+        </div>
+    )
+}
