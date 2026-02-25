@@ -66,11 +66,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (error) throw error
 
                 if (mounted) {
+                    const isSameUser = session?.user?.id === user?.id
+
                     setSession(session)
                     setUser(session?.user ?? null)
 
                     if (session?.user) {
-                        await fetchOrgMember(session.user.id)
+                        if (!isSameUser || !orgMember) {
+                            await fetchOrgMember(session.user.id)
+                        } else {
+                            // If we already have the orgMember for this user, just clear loading
+                            setLoading(false)
+                        }
                     } else {
                         setLoading(false)
                     }
@@ -85,19 +92,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         checkSession()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
             if (!mounted) return
 
-            setSession(newSession)
-            setUser(newSession?.user ?? null)
-
-            // Only run the fetch on state change if we aren't currently in the initial load
+            // Only run if we aren't currently in the initial load
             if (!authInitializing) {
+                const isSameUser = newSession?.user?.id === session?.user?.id;
+
+                setSession(newSession)
+                setUser(newSession?.user ?? null)
+
                 if (newSession?.user) {
-                    // Set loading true while fetching new org member on auth change
-                    setLoading(true)
-                    await fetchOrgMember(newSession.user.id)
+                    // If it's the exact same user (e.g., token refresh or tab focus), 
+                    // DO NOT block the UI with loading=true. We already have their orgMember in memory.
+                    // If we don't have an orgMember yet, or it's a completely new user logging in, fetch it.
+                    if (!isSameUser) {
+                        setLoading(true)
+                        await fetchOrgMember(newSession.user.id)
+                    } else if (!orgMember) {
+                        // Edge case: same user but orgMember failed to load previously
+                        await fetchOrgMember(newSession.user.id)
+                    }
                 } else {
+                    // User logged out
                     setOrgMember(null)
                     setLoading(false)
                 }
