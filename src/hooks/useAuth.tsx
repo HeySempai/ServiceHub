@@ -45,28 +45,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     useEffect(() => {
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            setSession(session)
-            setUser(session?.user ?? null)
-            if (session?.user) {
-                await fetchOrgMember(session.user.id)
+        let mounted = true
+
+        const initAuth = async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession()
+                if (error) console.error('Auth getSession error:', error)
+
+                if (mounted) {
+                    setSession(session)
+                    setUser(session?.user ?? null)
+                }
+
+                if (session?.user) {
+                    await fetchOrgMember(session.user.id)
+                }
+            } catch (err) {
+                console.error('Unexpected error during auth initialization:', err)
+            } finally {
+                if (mounted) setLoading(false)
             }
-            setLoading(false)
-        })
+        }
+
+        initAuth()
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            setSession(session)
-            setUser(session?.user ?? null)
-            if (session?.user) {
-                await fetchOrgMember(session.user.id)
-            } else {
-                setOrgMember(null)
+            try {
+                if (mounted) {
+                    setSession(session)
+                    setUser(session?.user ?? null)
+                }
+
+                if (session?.user) {
+                    await fetchOrgMember(session.user.id)
+                } else {
+                    if (mounted) setOrgMember(null)
+                }
+            } catch (err) {
+                console.error('Error during auth state change:', err)
+            } finally {
+                if (mounted) setLoading(false)
             }
-            setLoading(false)
         })
 
-        return () => subscription.unsubscribe()
-    }, [])
+        // Failsafe: if Supabase completely hangs, force loading to false after 3 seconds
+        const failsafeTimeout = setTimeout(() => {
+            if (mounted && loading) {
+                console.warn('Auth initialization timed out. Forcing loading to false.')
+                setLoading(false)
+            }
+        }, 3000)
+
+        return () => {
+            mounted = false
+            clearTimeout(failsafeTimeout)
+            subscription.unsubscribe()
+        }
+    }, [loading])
 
     const signIn = async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
