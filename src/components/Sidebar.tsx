@@ -12,15 +12,15 @@ import {
     LogOut,
 } from 'lucide-react'
 
-const navItems = [
-    { label: 'Agenda', to: '/bookings', icon: Calendar },
-    { label: 'Clientes', to: '/clients', icon: Users },
-    { label: 'Servicios', to: '/services', icon: Scissors },
+const operationItems = [
+    { label: 'Citas', to: '/bookings', icon: Calendar },
+    { label: 'Comprobantes', to: '/invoices', icon: FileText },
+    { label: 'Pagos', to: '/payments', icon: CreditCard },
 ]
 
-const financeItems = [
-    { label: 'Facturas', to: '/invoices', icon: FileText },
-    { label: 'Pagos', to: '/payments', icon: CreditCard },
+const managementItems = [
+    { label: 'Clientes', to: '/clients', icon: Users },
+    { label: 'Servicios', to: '/services', icon: Scissors },
     { label: 'Gastos', to: '/expenses', icon: Receipt },
 ]
 
@@ -56,7 +56,9 @@ export function Sidebar() {
                     <LayoutDashboard />
                     <span>Dashboard</span>
                 </NavLink>
-                {navItems.map((item) => (
+
+                <span className="sidebar-section-label">Operaciones</span>
+                {operationItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
@@ -67,8 +69,8 @@ export function Sidebar() {
                     </NavLink>
                 ))}
 
-                <span className="sidebar-section-label">Finanzas</span>
-                {financeItems.map((item) => (
+                <span className="sidebar-section-label">Gestión</span>
+                {managementItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
@@ -79,11 +81,13 @@ export function Sidebar() {
                     </NavLink>
                 ))}
 
-                <span className="sidebar-section-label">Sistema</span>
-                <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                    <Settings />
-                    <span>Configuración</span>
-                </NavLink>
+                <div style={{ marginTop: 'auto', paddingTop: 'var(--space-md)' }}>
+                    <span className="sidebar-section-label">Sistema</span>
+                    <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                        <Settings />
+                        <span>Configuración</span>
+                    </NavLink>
+                </div>
             </nav>
 
             <div className="sidebar-footer">

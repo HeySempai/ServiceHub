@@ -17,7 +17,7 @@ interface Service {
 }
 
 export function ServicesPage() {
-    const { orgMember } = useAuth()
+    const { orgMember, memberLabel } = useAuth()
     const [services, setServices] = useState<Service[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)

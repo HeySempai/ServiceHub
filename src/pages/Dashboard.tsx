@@ -23,7 +23,7 @@ interface RecentBooking {
 }
 
 export function DashboardPage() {
-    const { orgMember } = useAuth()
+    const { orgMember, memberLabel } = useAuth()
     const [stats, setStats] = useState<Stats>({ clientCount: 0, bookingsTodayCount: 0, monthRevenue: 0, pendingInvoices: 0 })
     const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([])
     const [loading, setLoading] = useState(true)
@@ -154,7 +154,7 @@ export function DashboardPage() {
                                 <tr>
                                     <th>Cliente</th>
                                     <th>Servicio</th>
-                                    <th>Proveedor</th>
+                                    <th>{memberLabel}</th>
                                     <th>Fecha</th>
                                     <th>Estado</th>
                                 </tr>

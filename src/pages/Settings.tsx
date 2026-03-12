@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { Save, Check, Upload, UserPlus, X, Mail, Calendar, ExternalLink, Loader } from 'lucide-react'
+import { Save, Check, Upload, UserPlus, X, Mail, Calendar, ExternalLink, Loader, Users } from 'lucide-react'
 
 const BUSINESS_TYPES = [
     { value: 'clinic', label: 'Clínica' },
@@ -26,7 +26,7 @@ const TIMEZONES = [
 ]
 
 export function SettingsPage() {
-    const { orgMember, user, session } = useAuth()
+    const { orgMember, user, session, memberLabel, memberLabelPlural } = useAuth()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [searchParams, setSearchParams] = useSearchParams()
 
@@ -45,6 +45,10 @@ export function SettingsPage() {
     const [orgSaving, setOrgSaving] = useState(false)
     const [orgSaved, setOrgSaved] = useState(false)
     const [uploading, setUploading] = useState(false)
+
+    // Member Labelling
+    const [customMemberLabel, setCustomMemberLabel] = useState('Proveedor')
+    const [customMemberLabelPlural, setCustomMemberLabelPlural] = useState('Proveedores')
 
     // Team
     const [teamMembers, setTeamMembers] = useState<any[]>([])
@@ -69,7 +73,7 @@ export function SettingsPage() {
 
         // Fetch org details
         supabase.from('organizations')
-            .select('name, type, timezone, logo_url')
+            .select('name, type, timezone, logo_url, settings')
             .eq('id', orgMember.org_id)
             .single()
             .then(({ data }) => {
@@ -78,6 +82,8 @@ export function SettingsPage() {
                     setOrgType(data.type || 'general')
                     setOrgTimezone(data.timezone || 'America/Mexico_City')
                     setLogoUrl(data.logo_url)
+                    setCustomMemberLabel(data.settings?.member_label || 'Proveedor')
+                    setCustomMemberLabelPlural(data.settings?.member_label_plural || 'Proveedores')
                 }
             })
 
@@ -135,8 +141,13 @@ export function SettingsPage() {
     const handleSaveOrg = async () => {
         if (!orgMember) return
         setOrgSaving(true)
+
+        // Fetch current settings to preserve other fields if any
+        const { data: org } = await supabase.from('organizations').select('settings').eq('id', orgMember.org_id).single()
+        const newSettings = { ...org?.settings, member_label: customMemberLabel, member_label_plural: customMemberLabelPlural }
+
         await supabase.from('organizations')
-            .update({ name: orgName, type: orgType, timezone: orgTimezone })
+            .update({ name: orgName, type: orgType, timezone: orgTimezone, settings: newSettings })
             .eq('id', orgMember.org_id)
         setOrgSaving(false)
         setOrgSaved(true)
@@ -344,6 +355,27 @@ export function SettingsPage() {
                                 {TIMEZONES.map((tz) => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
                             </select>
                         </div>
+
+                        {/* Labelling */}
+                        <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)', background: 'var(--color-glass)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-glass-border)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-sm)' }}>
+                                <Users size={16} style={{ color: 'var(--color-accent)' }} />
+                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>Personalización de Nombres</span>
+                            </div>
+                            <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-md)' }}>
+                                Define cómo se llamará a los miembros de tu equipo en el sistema (ej. "Barbero", "Doctor").
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+                                <div className="form-group">
+                                    <label className="form-label" style={{ fontSize: '11px' }}>Singular (ej. Barbero)</label>
+                                    <input className="form-input" value={customMemberLabel} onChange={(e) => setCustomMemberLabel(e.target.value)} disabled={!isOwner} placeholder="Proveedor" />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label" style={{ fontSize: '11px' }}>Plural (ej. Barberos)</label>
+                                    <input className="form-input" value={customMemberLabelPlural} onChange={(e) => setCustomMemberLabelPlural(e.target.value)} disabled={!isOwner} placeholder="Proveedores" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -354,7 +386,7 @@ export function SettingsPage() {
                     <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Equipo</h3>
                     {isAdminOrOwner && (
                         <button className="btn btn-primary btn-sm" onClick={() => setShowInvite(!showInvite)}>
-                            {showInvite ? <><X size={14} /> Cerrar</> : <><UserPlus size={14} /> Invitar miembro</>}
+                            {showInvite ? <><X size={14} /> Cerrar</> : <><UserPlus size={14} /> Invitar {memberLabel.toLowerCase()}</>}
                         </button>
                     )}
                 </div>
@@ -378,13 +410,13 @@ export function SettingsPage() {
                                 marginBottom: 'var(--space-md)',
                                 display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                             }}>
-                                <Check size={14} /> Miembro agregado al equipo
+                                <Check size={14} /> {memberLabel} agregado al equipo
                             </div>
                         )}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 'var(--space-sm)' }}>
                             <div className="form-group">
                                 <label className="form-label">Nombre</label>
-                                <input className="form-input" placeholder="Nombre del miembro" value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
+                                <input className="form-input" placeholder={`Nombre del ${memberLabel.toLowerCase()}`} value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Correo electrónico</label>

@@ -92,7 +92,9 @@
    Reset & Base
    ================================================ */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -127,9 +129,16 @@ a:hover {
   color: var(--color-accent-hover);
 }
 
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font-family: inherit;
   font-size: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
 }
 
 /* ================================================
@@ -427,8 +436,13 @@ input, textarea, select, button {
   font-weight: 500;
 }
 
-.card-trend.up { color: var(--color-success); }
-.card-trend.down { color: var(--color-danger); }
+.card-trend.up {
+  color: var(--color-success);
+}
+
+.card-trend.down {
+  color: var(--color-danger);
+}
 
 /* ================================================
    Stats Grid
@@ -459,10 +473,21 @@ input, textarea, select, button {
   pointer-events: none;
 }
 
-.stat-card.accent::after { background: var(--color-accent); }
-.stat-card.success::after { background: var(--color-success); }
-.stat-card.warning::after { background: var(--color-warning); }
-.stat-card.info::after { background: var(--color-info); }
+.stat-card.accent::after {
+  background: var(--color-accent);
+}
+
+.stat-card.success::after {
+  background: var(--color-success);
+}
+
+.stat-card.warning::after {
+  background: var(--color-warning);
+}
+
+.stat-card.info::after {
+  background: var(--color-info);
+}
 
 /* ================================================
    Buttons
@@ -511,6 +536,38 @@ input, textarea, select, button {
 .btn-secondary:hover {
   background: var(--color-glass-hover);
   border-color: rgba(255, 255, 255, 0.16);
+}
+
+.btn-icon-clear {
+  background: transparent !important;
+  color: var(--color-icon);
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.btn-icon-clear:hover {
+  background: var(--color-glass-hover) !important;
+}
+
+.btn-glass-effect,
+.dropdown-item {
+  transition: background 0.2s ease;
+}
+
+.btn-glass-effect:hover,
+.dropdown-item:hover {
+  background: var(--color-glass-hover) !important;
+}
+
+.btn-glass-primary {
+  background: var(--color-accent) !important;
+  color: white !important;
+  transition: all 0.2s ease;
+}
+
+.btn-glass-primary:hover {
+  background: var(--color-accent-hover) !important;
+  box-shadow: 0 0 15px var(--color-accent-glow);
 }
 
 .btn-ghost {
@@ -597,7 +654,8 @@ input, textarea, select, button {
   background: var(--color-bg-card);
   border: 1px solid var(--color-glass-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  /* Changed from hidden to visible to allow dropdowns to overflow */
+  overflow: visible;
 }
 
 .data-table {
@@ -933,17 +991,31 @@ input, textarea, select, button {
    ================================================ */
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-in {
@@ -989,4 +1061,613 @@ input, textarea, select, button {
   .modal {
     margin: var(--space-md);
   }
+}
+
+/* ================================================
+   FullCalendar Dark Theme Overrides (Google Calendar Style)
+   ================================================ */
+.fc-theme-standard .fc-scrollgrid {
+  border: none !important;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Day Headers (Mon, Tue, Wed) */
+.fc-col-header-cell {
+  background: transparent !important;
+  border-bottom: none !important;
+  border-right: none !important;
+  border-left: none !important;
+  padding: 12px 0 8px 0 !important;
+}
+
+.fc-col-header-cell-cushion {
+  color: #9aa0a6 !important;
+  /* Google Calendar muted header color */
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.8px;
+  text-decoration: none !important;
+  display: flex !important;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+/* Day Numbers (1, 2, 3) below the day name are custom rendered in React */
+
+/* --- Month View Specific Styling --- */
+
+/* Align text to top center */
+.fc-dayGridMonth-view .fc-daygrid-day-top {
+  justify-content: center !important;
+  padding-top: 4px;
+}
+
+/* Small day numbers in month view */
+.fc-dayGridMonth-view .fc-daygrid-day-number {
+  font-size: 11px !important;
+  color: #e8eaed !important;
+  padding: 2px 6px !important;
+}
+
+/* Today in month view - circle */
+.fc-dayGridMonth-view .fc-day-today .fc-daygrid-day-number {
+  background-color: var(--color-accent) !important;
+  color: white !important;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hide background overlay for today in month view */
+.fc-theme-standard .fc-dayGridMonth-view .fc-day-today {
+  background: transparent !important;
+}
+
+/* Simplistic event borders */
+.fc-dayGridMonth-view .fc-event {
+  border-radius: 4px;
+  margin: 1px 2px;
+}
+
+/* Subtler month view borders */
+.fc-theme-standard .fc-dayGridMonth-view th,
+.fc-theme-standard .fc-dayGridMonth-view td {
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.fc-theme-standard .fc-dayGridMonth-view .fc-scrollgrid {
+  border: none !important;
+}
+
+/* Custom Header Styling (DOM 1, LUN 2) */
+.fc-custom-weekday {
+  font-size: 10px !important;
+  /* 50% smaller */
+  color: #9aa0a6;
+  letter-spacing: 0.8px;
+}
+
+.fc-custom-daynum {
+  font-size: 24px !important;
+  /* Larger numbers */
+  color: #e8eaed;
+  font-weight: 400;
+  width: 38px;
+  /* Circular wrapper */
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* Today's Header Highlighting */
+.fc-day-today .fc-custom-weekday {
+  color: #8ab4f8 !important;
+  /* Google Blue for the text */
+}
+
+.fc-day-today .fc-custom-daynum {
+  background-color: #8ab4f8 !important;
+  /* Blue circle */
+  color: #202124 !important;
+  /* Dark text inside blue circle */
+}
+
+/* Today's Column Background (faint white instead of default yellow/blue) */
+.fc-theme-standard .fc-day-today {
+  background: transparent !important;
+}
+
+/* Fix Time Axis Width and alignment */
+.fc .fc-timegrid-axis,
+.fc .fc-timegrid-slot-label {
+  width: 90px !important;
+  min-width: 90px !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Remove horizontal borders from the label area cells so lines stop at the vertical axis */
+.fc .fc-timegrid-slot-label {
+  border-bottom: none !important;
+  border-top: none !important;
+  padding: 0 !important;
+}
+
+/* Center the time label vertically on the grid line */
+.fc-timegrid-slot-label-frame {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+  padding-right: 20px !important;
+  /* Space for the tick */
+  overflow: visible !important;
+  border: none !important;
+}
+
+/* Reset cushion padding to allow relative positioning constraints to work correctly */
+.fc-timegrid-slot-label-cushion {
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+/* The actual hour text */
+.fc-custom-time {
+  /* Position relative, pull up by 50% to center exactly on the slot's top border */
+  position: relative !important;
+  top: 0 !important;
+  transform: translateY(-50%) !important;
+  width: 100% !important;
+  text-align: right !important;
+  display: block !important;
+  white-space: nowrap !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #9aa0a6 !important;
+}
+
+/* Small tick line connecting the text to the vertical grid line */
+.fc-custom-time::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  width: 15px;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Grid Lines */
+.fc-timegrid-slot {
+  height: 40px !important;
+  /* Slightly smaller slot to fit in screen without scrolling */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Add breathing room below the header so the perfectly centered 8AM label doesn't overlap the Sunday header */
+.fc-timegrid-body {
+  margin-top: 20px !important;
+}
+
+/* Adjust so horizontal lines don't bleed into the time axis column */
+.fc-timegrid-col-frame {
+  border-left: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.fc-timegrid-slot-minor {
+  border-top-style: none !important;
+}
+
+.fc-theme-standard .fc-scrollgrid-liquid {
+  border: none !important;
+}
+
+/* Current Time Indicator (Red line) */
+.fc-timegrid-now-indicator-line {
+  border-color: #ea4335 !important;
+  border-width: 2px !important;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  border-width: 5px !important;
+  border-color: transparent transparent transparent #ea4335 !important;
+  margin-top: -5px !important;
+}
+
+/* Events */
+.fc-timegrid-event {
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: none !important;
+  padding: 2px 4px !important;
+  margin: 1px 2px !important;
+}
+
+.fc-v-event .fc-event-main-frame {
+  display: flex;
+  flex-direction: column;
+}
+
+.fc-event-title-container {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+}
+
+.fc-event-time {
+  font-size: 10px !important;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+
+
+.fc-scrollgrid-section-header>td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  /* Line beneath days */
+}
+
+/* Hide the first top-left empty cell border */
+.fc-theme-standard .fc-timegrid-axis {
+  border: none !important;
+}
+
+.fc-scroller-harness {
+  background: var(--color-bg-primary) !important;
+  /* Deep dark background */
+}
+
+/* ================================================
+   Toast Notifications
+   ================================================ */
+
+.toast-container {
+  position: fixed;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(17, 17, 24, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-glass-border);
+  color: var(--color-text-primary);
+  padding: 12px 20px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  min-width: 320px;
+  animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  justify-content: space-between;
+}
+
+.toast-message {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+.toast-undo {
+  background: transparent;
+  border: none;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.toast-undo:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+@keyframes toastSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ================================================
+   Navigation and View Controls
+   ================================================ */
+
+.dropdown {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-glass-border);
+  border-radius: var(--radius-md);
+  padding: 8px 0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1000 !important;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent !important;
+  border: none;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, color 0.2s ease;
+  box-shadow: none !important;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-item.text-danger {
+  color: #f87171;
+}
+
+.dropdown-item.text-danger:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Date input professional styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
+
+/* ================================================
+   Mini Calendar Picker Styles
+   ================================================ */
+
+.calendar-picker {
+  padding: 16px;
+  user-select: none;
+}
+
+.calendar-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.calendar-picker-month {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  letter-spacing: 0.5px;
+}
+
+.calendar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-picker-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  padding: 8px 0;
+}
+
+.calendar-picker-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+.calendar-picker-day:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.calendar-picker-day.outside {
+  color: var(--color-text-tertiary);
+  opacity: 0.3;
+}
+
+.calendar-picker-day.today {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.calendar-picker-day.selected {
+  background: var(--color-accent) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+.calendar-picker-day.in-range {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-radius: 4px !important;
+}
+
+.calendar-picker-day.selected+.calendar-picker-day.in-range {
+  border-top-left-radius: 4px !important;
+  border-bottom-left-radius: 4px !important;
+}
+
+/* Time Gutter (Hours column) */
+.fc .fc-timegrid-axis-frame {
+  width: 60px !important;
+}
+
+.fc .fc-timegrid-slot-label {
+  vertical-align: middle !important;
+}
+
+.fc .fc-timegrid-slot-label-frame {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  position: relative !important;
+}
+
+/* Center hour label on the line */
+.fc-custom-time {
+  position: absolute !important;
+  top: 0 !important;
+  transform: translateY(-50%) !important;
+  background: var(--color-bg-primary) !important;
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-secondary) !important;
+  z-index: 2 !important;
+  white-space: nowrap !important;
+}
+
+/* Grid Line Visibility */
+.fc .fc-timegrid-slots td {
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.fc .fc-timegrid-slot-minor {
+  border-top-style: dotted !important;
+  border-top-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Day Headers Styling (Two-line) */
+.fc .fc-col-header-cell {
+  padding: 12px 0 !important;
+  background: transparent !important;
+}
+
+.fc-custom-weekday {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--color-text-tertiary) !important;
+  letter-spacing: 0.5px !important;
+}
+
+.fc-custom-daynum {
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  color: var(--color-text-primary) !important;
+  margin-top: 2px !important;
+}
+
+/* Today Highlight in Header */
+.fc .fc-col-header-cell.fc-day-today {
+  background: transparent !important;
+}
+
+.fc .fc-col-header-cell.fc-day-today .fc-custom-daynum {
+  background: var(--color-accent) !important;
+  color: white !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  margin: 2px auto 0 !important;
+}
+
+/* Event Overlap / Google-like look */
+.fc-v-event {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ================================================
+   Table and List View Enhancements
+   ================================================ */
+
+.table-row-hover:hover {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.btn-hover-success:hover {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  transform: translateY(-1px);
+}
+
+.btn-hover-accent:hover {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  transform: translateY(-1px);
+}
+
+.text-tertiary {
+  color: var(--color-text-tertiary) !important;
+}
+
+.text-danger {
+  color: #f87171 !important;
+}
+
+.form-input-inline:focus {
+  outline: none;
+}
+
+.dropdown-menu.show {
+  display: block !important;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Smooth transitions for all interactive elements */
+.btn,
+.dropdown-item,
+tr {
+  transition: all var(--transition-fast) ease-in-out;
 }

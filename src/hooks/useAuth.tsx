@@ -9,7 +9,7 @@ interface OrgMember {
     display_name: string
     email: string
     can_be_booked: boolean
-    organizations: { id: string; name: string; slug: string; type: string }
+    organizations: { id: string; name: string; slug: string; type: string; settings: any }
 }
 
 interface AuthContextType {
@@ -17,6 +17,8 @@ interface AuthContextType {
     session: Session | null
     orgMember: OrgMember | null
     loading: boolean
+    memberLabel: string
+    memberLabelPlural: string
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>
     signUp: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>
     signOut: () => Promise<void>
@@ -35,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('Fetching org member for user_id:', userId)
         const { data, error } = await supabase
             .from('org_members')
-            .select('id, org_id, role, display_name, email, can_be_booked, organizations(id, name, slug, type)')
+            .select('id, org_id, role, display_name, email, can_be_booked, organizations(id, name, slug, type, settings)')
             .eq('user_id', userId)
             .eq('active', true)
             .limit(1)
@@ -159,8 +161,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setOrgMember(null)
     }
 
+    const memberLabel = orgMember?.organizations?.settings?.member_label || 'Proveedor'
+    const memberLabelPlural = orgMember?.organizations?.settings?.member_label_plural || 'Proveedores'
+
     return (
-        <AuthContext.Provider value={{ user, session, orgMember, loading, signIn, signUp, signOut }}>
+        <AuthContext.Provider value={{ user, session, orgMember, loading, memberLabel, memberLabelPlural, signIn, signUp, signOut }}>
             {children}
         </AuthContext.Provider>
     )
