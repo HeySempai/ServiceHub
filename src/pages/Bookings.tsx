@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays } from 'lucide-react'
+import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays, DollarSign, AlertCircle } from 'lucide-react'
 import { CalendarPicker } from '../components/CalendarPicker'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -24,6 +24,14 @@ interface Booking {
 
 interface SelectOption { id: string; label: string; color?: string | null }
 
+interface InvoiceInfo {
+    id: string
+    status: string
+    total: number
+    amount_paid: number
+    balance_due: number
+}
+
 type ViewMode = 'calendar' | 'list'
 type CalendarViewType = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'
 
@@ -45,7 +53,7 @@ export function BookingsPage() {
     const [showModal, setShowModal] = useState(false)
 
     // View state
-    const [viewMode, setViewMode] = useState<ViewMode>('calendar')
+    const [viewMode, setViewMode] = useState<ViewMode>('list')
     const [calendarTitle, setCalendarTitle] = useState('')
     const [currentCalView, setCurrentCalView] = useState<CalendarViewType>('timeGridWeek')
 
@@ -73,6 +81,19 @@ export function BookingsPage() {
     const [clients, setClients] = useState<SelectOption[]>([])
     const [services, setServices] = useState<SelectOption[]>([])
     const [providers, setProviders] = useState<SelectOption[]>([])
+    const [paymentMethods, setPaymentMethods] = useState<SelectOption[]>([])
+
+    // Invoice map: bookingId → InvoiceInfo
+    const [bookingInvoices, setBookingInvoices] = useState<Map<string, InvoiceInfo>>(new Map())
+
+    // Quick-Pay modal
+    const [showPayModal, setShowPayModal] = useState(false)
+    const [payTarget, setPayTarget] = useState<{ booking: Booking; invoice: InvoiceInfo | null; clientBalance: number; clientBalanceLoading: boolean } | null>(null)
+    const [payMode, setPayMode] = useState<'new' | 'balance'>('new')
+    const [payAmount, setPayAmount] = useState('')
+    const [payMethodId, setPayMethodId] = useState('')
+    const [payNotes, setPayNotes] = useState('')
+    const [payingSaving, setPayingSaving] = useState(false)
 
     const [form, setForm] = useState({ client_id: '', service_id: '', provider_id: '', date: '', time: '09:00', notes: '', status: 'scheduled' })
     const [saving, setSaving] = useState(false)
@@ -87,12 +108,10 @@ export function BookingsPage() {
     const fetchBookings = async () => {
         if (!orgId) return
 
-        // For list view or calendar, we fetch a wide range. 
-        // In a real huge app, this should be paginated or tied closely to the visible date range.
         const start = new Date()
-        start.setMonth(start.getMonth() - 6) // Fetch past 6 months
+        start.setMonth(start.getMonth() - 6)
         const end = new Date()
-        end.setMonth(end.getMonth() + 6) // Fetch future 6 months
+        end.setMonth(end.getMonth() + 6)
 
         const { data } = await supabase
             .from('bookings')
@@ -100,23 +119,48 @@ export function BookingsPage() {
             .eq('org_id', orgId)
             .gte('start_at', start.toISOString())
             .lt('start_at', end.toISOString())
-            // Normally order by start_at for the list, ascending for upcoming
-            .order('start_at', { ascending: true })
+            .order('start_at', { ascending: false })
 
-        setBookings((data as unknown as Booking[]) || [])
+        const loaded = (data as unknown as Booking[]) || []
+        setBookings(loaded)
         setLoading(false)
+
+        // Fetch invoice info for each booking
+        if (loaded.length > 0) {
+            const bookingIds = loaded.map(b => b.id)
+            const { data: lines } = await supabase
+                .from('invoice_lines')
+                .select('booking_id, invoices(id, status, total, amount_paid, balance_due)')
+                .in('booking_id', bookingIds)
+
+            const map = new Map<string, InvoiceInfo>()
+            lines?.forEach((line: any) => {
+                if (line.invoices && line.booking_id && !map.has(line.booking_id)) {
+                    map.set(line.booking_id, {
+                        id: line.invoices.id,
+                        status: line.invoices.status,
+                        total: parseFloat(line.invoices.total),
+                        amount_paid: parseFloat(line.invoices.amount_paid),
+                        balance_due: parseFloat(line.invoices.balance_due),
+                    })
+                }
+            })
+            setBookingInvoices(map)
+        }
     }
 
     const fetchOptions = async () => {
         if (!orgId) return
-        const [c, s, p] = await Promise.all([
+        const [c, s, p, pm] = await Promise.all([
             supabase.from('clients').select('id, first_name, last_name').eq('org_id', orgId).eq('active', true).order('last_name'),
             supabase.from('services').select('id, name, duration_min, price').eq('org_id', orgId).eq('active', true).order('name'),
             supabase.from('org_members').select('id, display_name, color').eq('org_id', orgId).eq('can_be_booked', true).eq('active', true),
+            supabase.from('payment_methods').select('id, name').eq('org_id', orgId).order('sort_order'),
         ])
         setClients(c.data?.map((x) => ({ id: x.id, label: `${x.first_name} ${x.last_name}` })) || [])
         setServices(s.data?.map((x) => ({ id: x.id, label: x.name })) || [])
         setProviders(p.data?.map((x) => ({ id: x.id, label: x.display_name, color: x.color })) || [])
+        setPaymentMethods(pm.data?.map((x) => ({ id: x.id, label: x.name })) || [])
     }
 
     useEffect(() => { fetchBookings() }, [orgId])
@@ -202,14 +246,15 @@ export function BookingsPage() {
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (dropdownRef.current && !dropdownRef.current.contains(target)) {
                 setShowViewDropdown(false)
             }
-            if (dateDropdownRef.current && !dateDropdownRef.current.contains(event.target as Node)) {
+            if (dateDropdownRef.current && !dateDropdownRef.current.contains(target)) {
                 setShowDateDropdown(false)
             }
             // Close table action dropdown if clicking outside
-            if (activeDropdownId && !(event.target as HTMLElement).closest('.btn-icon')) {
+            if (activeDropdownId && !(target as HTMLElement).closest('.dropdown-container')) {
                 setActiveDropdownId(null)
             }
         }
@@ -326,8 +371,186 @@ export function BookingsPage() {
         fetchBookings()
     }
 
-    const handleMarkStatus = async (id: string, newStatus: string) => {
-        await supabase.from('bookings').update({ status: newStatus }).eq('id', id)
+    const handleMarkStatus = async (booking: Booking, newStatus: string) => {
+        if (!orgId) return
+        setToast({ message: 'Actualizando estado...', visible: true, isSaving: true })
+
+        const { error } = await supabase.from('bookings').update({ status: newStatus }).eq('id', booking.id)
+        if (error) {
+            setToast({ message: 'Error al actualizar', visible: true, isSaving: false })
+            return
+        }
+
+        // Auto-generate invoice if completed and no invoice exists
+        if (newStatus === 'completed' && !bookingInvoices.has(booking.id)) {
+            const servicePrice = booking.services?.price || 0
+            const dateStr = new Date().toISOString().split('T')[0]
+            const yearStr = dateStr.split('-')[0]
+            const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true })
+            const nextNum = (count || 0) + 1
+            const invNumber = `INV-${yearStr}-${nextNum.toString().padStart(4, '0')}`
+
+            const taxRate = 0.16
+            const subtotal = servicePrice
+            const tax = subtotal * taxRate
+            const total = subtotal + tax
+
+            const { data: invData, error: invError } = await supabase.from('invoices').insert({
+                org_id: orgId,
+                client_id: booking.client_id,
+                invoice_number: invNumber,
+                status: 'open',
+                subtotal,
+                tax_total: tax,
+                total,
+                amount_paid: 0,
+                issued_at: dateStr,
+                due_at: dateStr
+            }).select('id').single()
+
+            if (invData && !invError) {
+                await supabase.from('invoice_lines').insert({
+                    invoice_id: invData.id,
+                    booking_id: booking.id,
+                    description: booking.services?.name || 'Servicio',
+                    quantity: 1,
+                    unit_price: servicePrice,
+                    tax_rate: taxRate,
+                    tax,
+                    total,
+                    sort_order: 1
+                })
+            }
+        }
+
+        setToast({ message: 'Estado actualizado', visible: true, isSaving: false })
+        setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000)
+        fetchBookings()
+    }
+
+    const openPayModal = async (booking: Booking, invoice: InvoiceInfo) => {
+        setPayTarget({ booking, invoice, clientBalance: 0, clientBalanceLoading: true })
+        setShowPayModal(true)
+        setPayAmount(invoice.balance_due.toString())
+        setPayMethodId(paymentMethods.length > 0 ? paymentMethods[0].id : '')
+        setPayMode('new')
+        setPayNotes('')
+
+        // Compute client balance
+        const [paymentsRes, invoicesRes] = await Promise.all([
+            supabase.from('payments').select('amount').eq('client_id', booking.client_id),
+            supabase.from('invoices').select('total').eq('client_id', booking.client_id)
+        ])
+
+        const totalPaid = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
+        const totalInvoiced = invoicesRes.data?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0
+        const balance = Math.max(0, totalPaid - totalInvoiced)
+
+        setPayTarget({ booking, invoice, clientBalance: balance, clientBalanceLoading: false })
+    }
+
+    const handlePayClick = async (booking: Booking, existingInvoice?: InvoiceInfo) => {
+        if (!orgId) return
+
+        if (existingInvoice) {
+            openPayModal(booking, existingInvoice)
+            return
+        }
+
+        // Auto-generate invoice if missing (e.g. older completed appointments before quick-pay feature)
+        setToast({ message: 'Generando comprobante...', visible: true, isSaving: true })
+
+        const servicePrice = booking.services?.price || 0
+        const dateStr = new Date().toISOString().split('T')[0]
+        const yearStr = dateStr.split('-')[0]
+        const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true })
+        const nextNum = (count || 0) + 1
+        const invNumber = `INV-${yearStr}-${nextNum.toString().padStart(4, '0')}`
+
+        const taxRate = 0.16
+        const subtotal = servicePrice
+        const tax = subtotal * taxRate
+        const total = subtotal + tax
+
+        const { data: invData, error: invError } = await supabase.from('invoices').insert({
+            org_id: orgId,
+            client_id: booking.client_id,
+            invoice_number: invNumber,
+            status: 'open',
+            subtotal,
+            tax_total: tax,
+            total,
+            amount_paid: 0,
+            issued_at: dateStr,
+            due_at: dateStr
+        }).select('id, status, total, amount_paid, balance_due').single()
+
+        if (invData && !invError) {
+            await supabase.from('invoice_lines').insert({
+                invoice_id: invData.id,
+                booking_id: booking.id,
+                description: booking.services?.name || 'Servicio',
+                quantity: 1,
+                unit_price: servicePrice,
+                tax_rate: taxRate,
+                tax,
+                total,
+                sort_order: 1
+            })
+
+            // Fetch to update map so it persists
+            fetchBookings()
+
+            const newInvoiceInfo: InvoiceInfo = {
+                id: invData.id,
+                status: invData.status,
+                total: parseFloat(invData.total),
+                amount_paid: parseFloat(invData.amount_paid),
+                balance_due: parseFloat(invData.balance_due)
+            }
+
+            setToast({ ...toast, visible: false })
+            openPayModal(booking, newInvoiceInfo)
+        } else {
+            setToast({ message: 'Error generando comprobante', visible: true, isSaving: false })
+        }
+    }
+
+    const handlePaySubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!payTarget || !payTarget.invoice || !orgId) return
+
+        setPayingSaving(true)
+        const invoice = payTarget.invoice
+        const amountToPay = payMode === 'balance'
+            ? Math.min(payTarget.clientBalance, invoice.balance_due)
+            : parseFloat(payAmount)
+
+        if (amountToPay <= 0) {
+            setPayingSaving(false)
+            return
+        }
+
+        await supabase.from('payments').insert({
+            org_id: orgId,
+            invoice_id: invoice.id,
+            client_id: payTarget.booking.client_id,
+            method_id: payMode === 'balance' ? null : payMethodId,
+            amount: amountToPay,
+            date: new Date().toISOString().split('T')[0],
+            notes: payMode === 'balance' ? 'Pago con saldo a favor' : payNotes
+        })
+
+        const newPaid = invoice.amount_paid + amountToPay
+        const newStatus = newPaid >= invoice.total ? 'paid' : 'partial'
+
+        await supabase.from('invoices').update({
+            amount_paid: newPaid,
+            status: newStatus
+        }).eq('id', invoice.id)
+
+        setPayingSaving(false)
+        setShowPayModal(false)
         fetchBookings()
     }
 
@@ -593,12 +816,17 @@ export function BookingsPage() {
                             </div>
 
                             <button
-                                className="btn btn-secondary"
                                 style={{ borderRadius: '16px', height: '36px', gap: '8px' }}
+                                className={`btn ${startDate === new Date().toISOString().split('T')[0] && endDate === new Date().toISOString().split('T')[0] ? 'btn-primary' : 'btn-secondary'}`}
                                 onClick={() => {
                                     const today = new Date().toISOString().split('T')[0];
-                                    setStartDate(today);
-                                    setEndDate(today);
+                                    if (startDate === today && endDate === today) {
+                                        setStartDate('');
+                                        setEndDate('');
+                                    } else {
+                                        setStartDate(today);
+                                        setEndDate(today);
+                                    }
                                 }}
                             >
                                 <CalendarDays size={16} /> Hoy
@@ -608,7 +836,7 @@ export function BookingsPage() {
                         <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                 {/* Status Filter Dropdown */}
-                                <div style={{ position: 'relative' }}>
+                                <div className="dropdown-container" style={{ position: 'relative' }}>
                                     <button
                                         className="btn btn-secondary"
                                         style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '160px', justifyContent: 'space-between' }}
@@ -642,7 +870,7 @@ export function BookingsPage() {
                                 </div>
 
                                 {/* Provider Filter Dropdown */}
-                                <div style={{ position: 'relative' }}>
+                                <div className="dropdown-container" style={{ position: 'relative' }}>
                                     <button
                                         className="btn btn-secondary"
                                         style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '180px', justifyContent: 'space-between' }}
@@ -806,21 +1034,39 @@ export function BookingsPage() {
                                             </span>
                                         </td>
                                         <td style={{ padding: '16px' }}>
-                                            <span style={{
-                                                display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500,
-                                                background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-tertiary)'
-                                            }}>
-                                                —
-                                            </span>
+                                            {(() => {
+                                                if (b.status === 'scheduled' || b.status === 'cancelled' || b.status === 'no_show') {
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-tertiary)' }}>—</span>
+                                                }
+                                                const inv = bookingInvoices.get(b.id)
+                                                if (!inv || inv.status === 'open') {
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(245, 158, 11, 0.15)', color: '#fcd34d' }}>Abierta</span>
+                                                }
+                                                if (inv.status === 'partial') {
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(249, 115, 22, 0.15)', color: '#fdba74' }}>Parcial</span>
+                                                }
+                                                if (inv.status === 'paid') {
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>Pagada</span>
+                                                }
+                                                if (inv.status === 'void') {
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(239, 68, 68, 0.15)', color: '#f87171' }}>Anulada</span>
+                                                }
+                                                return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-tertiary)' }}>—</span>
+                                            })()}
                                         </td>
                                         <td style={{ padding: '16px', textAlign: 'right' }}>
                                             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
                                                 {b.status === 'scheduled' && (
-                                                    <button className="btn btn-icon btn-hover-success" title="Marcar como Completado" onClick={() => handleMarkStatus(b.id, 'completed')}>
+                                                    <button className="btn btn-icon btn-hover-success" title="Marcar como Completado" onClick={() => handleMarkStatus(b, 'completed')}>
                                                         <CheckCircle size={18} />
                                                     </button>
                                                 )}
-                                                <div style={{ position: 'relative' }}>
+                                                {b.status === 'completed' && (!bookingInvoices.get(b.id) || ['open', 'partial'].includes(bookingInvoices.get(b.id)!.status)) && (
+                                                    <button className="btn btn-icon btn-hover-success" title="Cobrar / Registrar Pago" onClick={(e) => { e.stopPropagation(); handlePayClick(b, bookingInvoices.get(b.id)); }}>
+                                                        <DollarSign size={18} />
+                                                    </button>
+                                                )}
+                                                <div className="dropdown-container" style={{ position: 'relative' }}>
                                                     <button
                                                         className="btn btn-icon btn-hover-accent"
                                                         onClick={(e) => {
@@ -832,6 +1078,15 @@ export function BookingsPage() {
                                                     </button>
                                                     {activeDropdownId === b.id && (
                                                         <div className="dropdown" style={{ position: 'absolute', top: '100%', right: 0, width: '160px', zIndex: 100 }}>
+                                                            {/* Dropdown options */}
+                                                            {b.status === 'completed' && (!bookingInvoices.get(b.id) || ['open', 'partial'].includes(bookingInvoices.get(b.id)!.status)) && (
+                                                                <>
+                                                                    <button className="dropdown-item text-success" style={{ color: '#10b981' }} onClick={() => { handlePayClick(b, bookingInvoices.get(b.id)); setActiveDropdownId(null) }}>
+                                                                        <DollarSign size={14} style={{ opacity: 1 }} /> Cobrar cita
+                                                                    </button>
+                                                                    <div style={{ height: '1px', background: 'var(--color-glass-border)', margin: '4px 0' }} />
+                                                                </>
+                                                            )}
                                                             <button className="dropdown-item" onClick={() => { openEditBooking(b); setActiveDropdownId(null) }}>
                                                                 <Edit2 size={14} /> Editar
                                                             </button>
@@ -985,6 +1240,107 @@ export function BookingsPage() {
                 )
             }
 
+            {/* Quick Pay Modal */}
+            {showPayModal && payTarget && payTarget.invoice && (
+                <div className="modal-overlay" onClick={() => !payingSaving && setShowPayModal(false)}>
+                    <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Registrar Pago</h3>
+                            <button className="modal-close" onClick={() => !payingSaving && setShowPayModal(false)}><X size={16} /></button>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--space-md)' }}>
+                            <button
+                                type="button"
+                                className={`btn ${payMode === 'new' ? 'btn-primary' : 'btn-secondary'}`}
+                                style={{ flex: 1 }}
+                                onClick={() => setPayMode('new')}
+                            >
+                                Nuevo Pago
+                            </button>
+                            <button
+                                type="button"
+                                className={`btn ${payMode === 'balance' ? 'btn-primary' : 'btn-secondary'}`}
+                                style={{ flex: 1 }}
+                                disabled={payTarget.clientBalanceLoading || payTarget.clientBalance <= 0}
+                                onClick={() => setPayMode('balance')}
+                                title={payTarget.clientBalance <= 0 ? "El cliente no tiene saldo a favor" : ""}
+                            >
+                                Usar Balance
+                            </button>
+                        </div>
+
+                        <form onSubmit={handlePaySubmit}>
+                            <div style={{ background: 'var(--color-glass-surface)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-glass-border)', marginBottom: 'var(--space-md)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ color: 'var(--color-text-tertiary)' }}>Total Comprobante:</span>
+                                    <span style={{ fontWeight: 500 }}>${payTarget.invoice.total.toLocaleString()}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ color: 'var(--color-text-tertiary)' }}>Monto Pagado:</span>
+                                    <span style={{ fontWeight: 500 }}>${payTarget.invoice.amount_paid.toLocaleString()}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>Saldo Pendiente:</span>
+                                    <span style={{ color: '#f87171', fontWeight: 600 }}>${payTarget.invoice.balance_due.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {payMode === 'new' ? (
+                                <>
+                                    <div className="form-group" style={{ marginBottom: 'var(--space-md)' }}>
+                                        <label className="form-label">Monto a Pagar</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)' }}>$</span>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                style={{ paddingLeft: '28px' }}
+                                                required
+                                                min="0.01"
+                                                step="0.01"
+                                                max={payTarget.invoice.balance_due}
+                                                value={payAmount}
+                                                onChange={e => setPayAmount(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 'var(--space-md)' }}>
+                                        <label className="form-label">Método de Pago</label>
+                                        <select className="form-select" required value={payMethodId} onChange={e => setPayMethodId(e.target.value)}>
+                                            {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Notas (Opcional)</label>
+                                        <textarea className="form-textarea" value={payNotes} onChange={e => setPayNotes(e.target.value)} rows={2} />
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ background: 'rgba(52, 211, 153, 0.1)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(52, 211, 153, 0.2)', marginBottom: 'var(--space-md)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', marginBottom: '8px', fontWeight: 500 }}>
+                                        <AlertCircle size={16} />
+                                        Saldo a Favor Disponible
+                                    </div>
+                                    <div style={{ fontSize: '24px', fontWeight: 600, color: 'white', marginBottom: '16px' }}>
+                                        ${payTarget.clientBalance.toLocaleString()}
+                                    </div>
+                                    <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', margin: 0 }}>
+                                        Se aplicarán <strong>${Math.min(payTarget.clientBalance, payTarget.invoice.balance_due).toLocaleString()}</strong> de este saldo para {Math.min(payTarget.clientBalance, payTarget.invoice.balance_due) >= payTarget.invoice.balance_due ? 'liquidar' : 'abonar a'} esta cita.
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="modal-actions" style={{ marginTop: 'var(--space-xl)' }}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowPayModal(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" disabled={payingSaving}>
+                                    {payingSaving ? <span className="spinner" /> : 'Confirmar Pago'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
             {/* Toast Notifications */}
             {toast.visible && (
                 <div className="toast-container">
