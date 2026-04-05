@@ -72,8 +72,9 @@ export function BookingsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [providerFilter, setProviderFilter] = useState('all')
-    const [startDate, setStartDate] = useState('')
-    const [endDate, setEndDate] = useState('')
+    const today = new Date().toISOString().split('T')[0]
+    const [startDate, setStartDate] = useState(today)
+    const [endDate, setEndDate] = useState(today)
 
     // Calendar view options
     const [showViewDropdown, setShowViewDropdown] = useState(false)
@@ -848,9 +849,8 @@ export function BookingsPage() {
 
                             <button
                                 style={{ borderRadius: '16px', height: '36px', gap: '6px', flexShrink: 0 }}
-                                className={`btn ${startDate === new Date().toISOString().split('T')[0] && endDate === new Date().toISOString().split('T')[0] ? 'btn-primary' : 'btn-secondary'}`}
+                                className={`btn ${startDate === today && endDate === today ? 'btn-primary' : 'btn-secondary'}`}
                                 onClick={() => {
-                                    const today = new Date().toISOString().split('T')[0];
                                     if (startDate === today && endDate === today) {
                                         setStartDate('');
                                         setEndDate('');
@@ -1130,14 +1130,6 @@ export function BookingsPage() {
                                                     {activeDropdownId === b.id && (
                                                         <div className="dropdown" style={{ position: 'absolute', top: '100%', right: 0, width: '160px', zIndex: 100 }}>
                                                             {/* Dropdown options */}
-                                                            {b.status === 'completed' && (!bookingInvoices.get(b.id) || ['open', 'partial'].includes(bookingInvoices.get(b.id)!.status)) && (
-                                                                <>
-                                                                    <button className="dropdown-item text-success" style={{ color: '#10b981' }} onClick={() => { handlePayClick(b, bookingInvoices.get(b.id)); setActiveDropdownId(null) }}>
-                                                                        <DollarSign size={14} style={{ opacity: 1 }} /> Cobrar cita
-                                                                    </button>
-                                                                    <div style={{ height: '1px', background: 'var(--color-glass-border)', margin: '4px 0' }} />
-                                                                </>
-                                                            )}
                                                             <button className="dropdown-item" onClick={() => { openEditBooking(b); setActiveDropdownId(null) }}>
                                                                 <Edit2 size={14} /> Editar
                                                             </button>
@@ -1419,7 +1411,7 @@ export function BookingsPage() {
                                             <div style={{ position: 'relative' }}>
                                                 <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)' }}>$</span>
                                                 <input
-                                                    type="number" className="form-input" style={{ paddingLeft: '28px' }}
+                                                    type="number" className="form-input" style={{ paddingLeft: '28px', MozAppearance: 'textfield' }}
                                                     required min="0.01" step="0.01"
                                                     value={payAmount} onChange={e => setPayAmount(e.target.value)}
                                                 />
