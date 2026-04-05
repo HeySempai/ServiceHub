@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays, DollarSign, AlertCircle, Sun } from 'lucide-react'
 import { CalendarPicker } from '../components/CalendarPicker'
+import { DateTimePicker } from '../components/DateTimePicker'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -113,6 +114,7 @@ export function BookingsPage() {
 
     const [form, setForm] = useState({ client_id: '', provider_id: '', date: '', time: '09:00', notes: '', status: 'scheduled' })
     const [saving, setSaving] = useState(false)
+    const [showDateTimePicker, setShowDateTimePicker] = useState(false)
 
     // Toast state
     const [toast, setToast] = useState<{ message: string; visible: boolean; isSaving?: boolean }>({ message: '', visible: false })
@@ -1235,14 +1237,49 @@ export function BookingsPage() {
                                             {providers.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                                         </select>
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
-                                        <div className="form-group">
-                                            <label className="form-label">Fecha</label>
-                                            <input className="form-input" type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Hora</label>
-                                            <input className="form-input" type="time" required value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+                                    <div style={{ marginTop: 'var(--space-md)' }}>
+                                        <label className="form-label">Fecha y Hora</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <button
+                                                type="button"
+                                                className="form-input"
+                                                onClick={() => setShowDateTimePicker(!showDateTimePicker)}
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    cursor: 'pointer',
+                                                    padding: '10px 12px'
+                                                }}
+                                            >
+                                                <span style={{
+                                                    color: form.date ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'
+                                                }}>
+                                                    {form.date && form.time
+                                                        ? `${new Date(form.date).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' })} a las ${form.time}`
+                                                        : 'Seleccionar fecha y hora'
+                                                    }
+                                                </span>
+                                                <CalendarDays size={16} style={{ opacity: 0.6 }} />
+                                            </button>
+                                            {showDateTimePicker && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: 'calc(100% + 8px)',
+                                                    left: 0,
+                                                    zIndex: 1000,
+                                                    width: '320px'
+                                                }}>
+                                                    <DateTimePicker
+                                                        selectedDate={form.date}
+                                                        selectedTime={form.time}
+                                                        onDateTimeSelect={(date, time) => {
+                                                            setForm({ ...form, date, time })
+                                                        }}
+                                                        onClose={() => setShowDateTimePicker(false)}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     {editingId && (
