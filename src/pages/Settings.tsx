@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { Save, Check, Upload, UserPlus, X, Mail, Calendar, ExternalLink, Loader, Users } from 'lucide-react'
+import { Save, Check, Upload, UserPlus, X, Mail, Calendar, ExternalLink, Loader, Users, Trash2, UserCheck, UserX } from 'lucide-react'
 
 const BUSINESS_TYPES = [
     { value: 'clinic', label: 'Clínica' },
@@ -53,9 +53,11 @@ export function SettingsPage() {
     // Team
     const [teamMembers, setTeamMembers] = useState<any[]>([])
     const [showInvite, setShowInvite] = useState(false)
+    const [inviteMode, setInviteMode] = useState<'no_account' | 'with_account'>('no_account')
     const [inviteEmail, setInviteEmail] = useState('')
-    const [inviteRole, setInviteRole] = useState('staff')
+    const [inviteRole, setInviteRole] = useState('provider')
     const [inviteName, setInviteName] = useState('')
+    const [inviteColor, setInviteColor] = useState('#3B82F6')
     const [inviting, setInviting] = useState(false)
     const [inviteSuccess, setInviteSuccess] = useState(false)
 
@@ -89,7 +91,7 @@ export function SettingsPage() {
 
         // Fetch team members
         supabase.from('org_members')
-            .select('id, display_name, email, role, can_be_booked, active')
+            .select('id, display_name, email, role, can_be_booked, active, color, user_id')
             .eq('org_id', orgMember.org_id)
             .eq('active', true)
             .order('role')
@@ -176,48 +178,62 @@ export function SettingsPage() {
         setUploading(false)
     }
 
+    const refreshTeam = async () => {
+        if (!orgMember) return
+        const { data } = await supabase.from('org_members')
+            .select('id, display_name, email, role, can_be_booked, active, color, user_id')
+            .eq('org_id', orgMember.org_id)
+            .eq('active', true)
+            .order('role')
+        setTeamMembers(data || [])
+    }
+
     const handleInvite = async () => {
-        if (!orgMember || !inviteEmail) return
+        if (!orgMember || !inviteName.trim()) return
         setInviting(true)
 
-        // Create the user via sign-up (they'll get an email to set their password)
-        // For now, we pre-create the org_member record so when they log in, they're assigned
-        const { data: existingUser } = await supabase
-            .from('org_members')
-            .select('id')
-            .eq('org_id', orgMember.org_id)
-            .eq('email', inviteEmail)
-            .limit(1)
-
-        if (existingUser && existingUser.length > 0) {
-            setInviting(false)
-            return
+        if (inviteMode === 'with_account' && inviteEmail) {
+            // Check for duplicate email
+            const { data: existing } = await supabase
+                .from('org_members')
+                .select('id')
+                .eq('org_id', orgMember.org_id)
+                .eq('email', inviteEmail)
+                .limit(1)
+            if (existing && existing.length > 0) {
+                setInviting(false)
+                return
+            }
         }
 
-        // Insert a pending member (no user_id yet — they'll claim it on sign up)
-        await supabase.from('org_members').insert({
+        const { error: insertError } = await supabase.from('org_members').insert({
             org_id: orgMember.org_id,
-            user_id: null as unknown as string,
+            user_id: null,
             role: inviteRole,
-            display_name: inviteName || inviteEmail.split('@')[0],
-            email: inviteEmail,
+            display_name: inviteName.trim(),
+            email: inviteMode === 'with_account' ? inviteEmail : null,
+            color: inviteColor,
             can_be_booked: true,
             active: true,
         })
 
         setInviting(false)
+        if (insertError) {
+            console.error('Error al agregar miembro:', insertError)
+            return
+        }
         setInviteSuccess(true)
         setInviteEmail('')
         setInviteName('')
+        setInviteColor('#3B82F6')
         setTimeout(() => setInviteSuccess(false), 3000)
+        await refreshTeam()
+    }
 
-        // Refresh team
-        const { data } = await supabase.from('org_members')
-            .select('id, display_name, email, role, can_be_booked, active')
-            .eq('org_id', orgMember.org_id)
-            .eq('active', true)
-            .order('role')
-        setTeamMembers(data || [])
+    const handleRemoveMember = async (id: string) => {
+        if (!orgMember) return
+        await supabase.from('org_members').update({ active: false }).eq('id', id)
+        await refreshTeam()
     }
 
     const handleGoogleConnect = async () => {
@@ -244,7 +260,7 @@ export function SettingsPage() {
     const isAdminOrOwner = orgMember?.role === 'owner' || orgMember?.role === 'admin'
 
     const roleLabels: Record<string, string> = {
-        owner: 'Dueño', admin: 'Admin', staff: 'Staff',
+        owner: 'Dueño', admin: 'Admin', provider: 'Proveedor', receptionist: 'Recepcionista',
     }
 
     return (
@@ -386,12 +402,12 @@ export function SettingsPage() {
                     <h3 style={{ fontSize: 'var(--font-size-md)', fontWeight: 600 }}>Equipo</h3>
                     {isAdminOrOwner && (
                         <button className="btn btn-primary btn-sm" onClick={() => setShowInvite(!showInvite)}>
-                            {showInvite ? <><X size={14} /> Cerrar</> : <><UserPlus size={14} /> Invitar {memberLabel.toLowerCase()}</>}
+                            {showInvite ? <><X size={14} /> Cerrar</> : <><UserPlus size={14} /> Agregar {memberLabel.toLowerCase()}</>}
                         </button>
                     )}
                 </div>
 
-                {/* Invite Form */}
+                {/* Add Member Form */}
                 {showInvite && (
                     <div style={{
                         padding: 'var(--space-md)',
@@ -400,6 +416,30 @@ export function SettingsPage() {
                         border: '1px solid var(--color-accent)',
                         marginBottom: 'var(--space-lg)',
                     }}>
+                        {/* Mode toggle */}
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: 'var(--space-md)' }}>
+                            <button
+                                className={`btn btn-sm ${inviteMode === 'no_account' ? 'btn-primary' : 'btn-secondary'}`}
+                                style={{ borderRadius: '16px' }}
+                                onClick={() => setInviteMode('no_account')}
+                            >
+                                <UserX size={13} /> Sin acceso al sistema
+                            </button>
+                            <button
+                                className={`btn btn-sm ${inviteMode === 'with_account' ? 'btn-primary' : 'btn-secondary'}`}
+                                style={{ borderRadius: '16px' }}
+                                onClick={() => setInviteMode('with_account')}
+                            >
+                                <UserCheck size={13} /> Con cuenta (invitar)
+                            </button>
+                        </div>
+
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-md)' }}>
+                            {inviteMode === 'no_account'
+                                ? 'Agrega al miembro solo para llevar su agenda. No tendrá acceso al sistema.'
+                                : 'El miembro podrá iniciar sesión con su correo y tendrá acceso según su rol.'}
+                        </p>
+
                         {inviteSuccess && (
                             <div style={{
                                 padding: 'var(--space-sm) var(--space-md)',
@@ -413,30 +453,43 @@ export function SettingsPage() {
                                 <Check size={14} /> {memberLabel} agregado al equipo
                             </div>
                         )}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 'var(--space-sm)' }}>
-                            <div className="form-group">
-                                <label className="form-label">Nombre</label>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: inviteMode === 'with_account' ? '1fr 1fr 80px auto' : '1fr 80px auto', gap: 'var(--space-sm)', alignItems: 'end' }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Nombre *</label>
                                 <input className="form-input" placeholder={`Nombre del ${memberLabel.toLowerCase()}`} value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Correo electrónico</label>
-                                <input className="form-input" type="email" placeholder="correo@ejemplo.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+                            {inviteMode === 'with_account' && (
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label className="form-label">Correo electrónico</label>
+                                    <input className="form-input" type="email" placeholder="correo@ejemplo.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+                                </div>
+                            )}
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label className="form-label">Color</label>
+                                <input
+                                    type="color"
+                                    value={inviteColor}
+                                    onChange={(e) => setInviteColor(e.target.value)}
+                                    style={{ width: '100%', height: '38px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-glass-border)', background: 'var(--color-bg-secondary)', cursor: 'pointer', padding: '2px 4px' }}
+                                />
                             </div>
-                            <div className="form-group">
+                            <div className="form-group" style={{ marginBottom: 0 }}>
                                 <label className="form-label">Rol</label>
                                 <select className="form-select" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
-                                    <option value="staff">Staff</option>
+                                    <option value="provider">Proveedor</option>
+                                    <option value="receptionist">Recepcionista</option>
                                     <option value="admin">Admin</option>
                                 </select>
                             </div>
                         </div>
                         <button
                             className="btn btn-primary btn-sm"
-                            style={{ marginTop: 'var(--space-sm)' }}
+                            style={{ marginTop: 'var(--space-md)' }}
                             onClick={handleInvite}
-                            disabled={inviting || !inviteEmail}
+                            disabled={inviting || !inviteName.trim()}
                         >
-                            {inviting ? <span className="spinner" /> : <><Mail size={14} /> Agregar al equipo</>}
+                            {inviting ? <span className="spinner" /> : inviteMode === 'with_account' ? <><Mail size={14} /> Agregar e invitar</> : <><UserPlus size={14} /> Agregar al equipo</>}
                         </button>
                     </div>
                 )}
@@ -455,9 +508,10 @@ export function SettingsPage() {
                                 <div style={{
                                     width: 36, height: 36,
                                     borderRadius: 'var(--radius-full)',
-                                    background: 'var(--color-accent)',
+                                    background: m.color || 'var(--color-accent)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     fontWeight: 600, fontSize: 'var(--font-size-sm)', color: 'white',
+                                    flexShrink: 0,
                                 }}>
                                     {(m.display_name || '?')[0].toUpperCase()}
                                 </div>
@@ -465,14 +519,31 @@ export function SettingsPage() {
                                     <p style={{ fontWeight: 500, fontSize: 'var(--font-size-sm)' }}>
                                         {m.display_name} {m.id === orgMember?.id && <span style={{ color: 'var(--color-text-tertiary)' }}>(tú)</span>}
                                     </p>
-                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>{m.email}</p>
+                                    <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>
+                                        {m.email || <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>Sin cuenta</span>}
+                                    </p>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                                {!m.user_id && (
+                                    <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(148,163,184,0.15)', color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <UserX size={10} /> Sin acceso
+                                    </span>
+                                )}
                                 {m.can_be_booked && <span className="badge badge-scheduled" style={{ fontSize: '10px' }}>Agenda</span>}
                                 <span className={`badge ${m.role === 'owner' ? 'badge-completed' : m.role === 'admin' ? 'badge-confirmed' : 'badge-draft'}`}>
                                     {roleLabels[m.role] || m.role}
                                 </span>
+                                {isAdminOrOwner && m.id !== orgMember?.id && (
+                                    <button
+                                        className="btn-icon-clear"
+                                        style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-tertiary)' }}
+                                        title="Desactivar miembro"
+                                        onClick={() => handleRemoveMember(m.id)}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
