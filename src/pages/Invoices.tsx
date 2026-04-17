@@ -196,7 +196,7 @@ export function InvoicesPage() {
     }
 
     const handleVoid = async (id: string) => {
-        if (!confirm('¿Anular esta factura?')) return
+        if (!confirm('¿Anular este comprobante?')) return
         const { error } = await supabase.rpc('void_invoice', {
             p_invoice_id: id,
             p_org_id: orgId,
@@ -219,7 +219,7 @@ export function InvoicesPage() {
             p_amount:    payInvoice.balance_due,
             p_method_id: payMethodId || null,
             p_date:      new Date().toISOString().split('T')[0],
-            p_notes:     `Pago completo - ${payInvoice.invoice_number || ''}`,
+            p_notes:     `Pago completo - Comprobante ${payInvoice.invoice_number || ''}`,
         })
         if (error) console.error('mark_as_paid error:', error)
         setPayInvoice(null)
@@ -235,17 +235,17 @@ export function InvoicesPage() {
             <div className="page-header page-header-actions" style={{ marginBottom: 'var(--space-lg)' }}>
                 <div>
                     <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Comprobantes</h2>
-                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{invoices.length} facturas en total</p>
+                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{invoices.length} comprobantes en total</p>
                 </div>
             </div>
 
             {/* KPIs */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
                 {[
-                    { label: 'Total facturado', value: fmt(invoices.filter(i => i.status !== 'void').reduce((s, i) => s + i.total, 0)), color: 'var(--color-text-primary)' },
+                    { label: 'Total emitido', value: fmt(invoices.filter(i => i.status !== 'void').reduce((s, i) => s + i.total, 0)), color: 'var(--color-text-primary)' },
                     { label: 'Por cobrar',       value: fmt(invoices.filter(i => ['open','partial'].includes(i.status)).reduce((s, i) => s + i.balance_due, 0)), color: '#eab308' },
                     { label: 'Cobrado',          value: fmt(invoices.reduce((s, i) => s + i.amount_paid, 0)), color: 'var(--color-success)' },
-                    { label: 'Facturas abiertas',value: String(invoices.filter(i => ['open','partial'].includes(i.status)).length), color: '#f97316' },
+                    { label: 'Comprobantes abiertos',value: String(invoices.filter(i => ['open','partial'].includes(i.status)).length), color: '#f97316' },
                 ].map(kpi => (
                     <div key={kpi.label} className="card" style={{ padding: 'var(--space-lg)' }}>
                         <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>{kpi.label}</div>
@@ -289,7 +289,7 @@ export function InvoicesPage() {
             {loading ? (
                 <div className="loading-screen" style={{ minHeight: 300 }}><div className="spinner" /></div>
             ) : filteredInvoices.length === 0 ? (
-                <div className="card"><div className="empty-state"><FileText /><h3>Sin facturas aún</h3><p>Crea una nueva factura para comenzar.</p></div></div>
+                <div className="card"><div className="empty-state"><FileText /><h3>Sin comprobantes aún</h3><p>Crea un nuevo comprobante para comenzar.</p></div></div>
             ) : (
                 <div className="data-table-wrapper">
                     <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -370,7 +370,7 @@ export function InvoicesPage() {
                                                         )}
                                                         {inv.status !== 'void' && (
                                                             <button className="dropdown-item" style={{ gap: 8, color: '#f87171' }} onClick={() => { handleVoid(inv.id); setActiveDropdownId(null) }}>
-                                                                <X size={14} /> Anular factura
+                                                                <X size={14} /> Anular comprobante
                                                             </button>
                                                         )}
                                                     </div>
@@ -390,7 +390,7 @@ export function InvoicesPage() {
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal" style={{ maxWidth: '760px', width: '95vw' }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 className="modal-title">Nueva factura</h3>
+                            <h3 className="modal-title">Nuevo comprobante</h3>
                             <button className="modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
                         </div>
                         <form onSubmit={handleSave}>
@@ -474,7 +474,7 @@ export function InvoicesPage() {
                             <div className="modal-actions">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                                 <button type="submit" className="btn btn-primary" disabled={saving || invoiceTotal === 0}>
-                                    {saving ? <span className="spinner" /> : 'Crear factura'}
+                                    {saving ? <span className="spinner" /> : 'Crear comprobante'}
                                 </button>
                             </div>
                         </form>
@@ -492,12 +492,12 @@ export function InvoicesPage() {
                         </div>
                         <div style={{ marginBottom: 'var(--space-md)' }}>
                             <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0 }}>
-                                Se registrará un pago por el saldo pendiente de esta factura.
+                                Se registrará un pago por el saldo pendiente de este comprobante.
                             </p>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
                             <div style={{ background: 'var(--color-glass)', borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
-                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Factura</div>
+                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Comprobante</div>
                                 <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'monospace' }}>{payInvoice.invoice_number || '—'}</div>
                             </div>
                             <div style={{ background: 'var(--color-glass)', borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
