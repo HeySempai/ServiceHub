@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { FileText, X, MoreVertical, ChevronDown, Receipt, Plus, Trash2, Search } from 'lucide-react'
+import { FileText, X, MoreVertical, ChevronDown, Receipt, Plus, Trash2, Search, CheckCircle2 } from 'lucide-react'
 import { InvoiceDetailModal } from '@/components/InvoiceDetailModal'
 
 interface InvoiceLine {
@@ -41,6 +41,11 @@ interface Client {
     credit_balance: number
 }
 
+interface PaymentMethod {
+    id: string
+    name: string
+}
+
 
 const fmt = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0)
 
@@ -60,6 +65,7 @@ export function InvoicesPage() {
     const { orgMember } = useAuth()
     const [invoices, setInvoices]           = useState<Invoice[]>([])
     const [clients, setClients]             = useState<Client[]>([])
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
     const [loading, setLoading]             = useState(true)
     const [showModal, setShowModal]         = useState(false)
     const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null)
@@ -69,6 +75,11 @@ export function InvoicesPage() {
 
     // Detail modal
     const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+
+    // Mark as paid modal
+    const [payInvoice, setPayInvoice] = useState<Invoice | null>(null)
+    const [payMethodId, setPayMethodId] = useState('')
+    const [payingInvoice, setPayingInvoice] = useState(false)
 
     // Invoice form
     const [form, setForm] = useState({
@@ -84,7 +95,7 @@ export function InvoicesPage() {
 
     const fetchAll = async () => {
         if (!orgId) return
-        const [invRes, clientRes] = await Promise.all([
+        const [invRes, clientRes, pmRes] = await Promise.all([
             supabase.from('invoices')
                 .select('id, invoice_number, status, subtotal, tax_total, total, amount_paid, balance_due, issued_at, notes, client_rfc, requires_cfdi, client_id, clients(first_name, last_name, rfc), invoice_lines(description, quantity, unit_price, tax_rate, tax, total, sort_order)')
                 .eq('org_id', orgId)
@@ -92,9 +103,12 @@ export function InvoicesPage() {
             supabase.from('clients')
                 .select('id, first_name, last_name, rfc, credit_balance')
                 .eq('org_id', orgId).eq('active', true).order('last_name'),
+            supabase.from('payment_methods')
+                .select('id, name').eq('org_id', orgId).eq('active', true).order('sort_order'),
         ])
         setInvoices((invRes.data as unknown as Invoice[]) || [])
         setClients(clientRes.data || [])
+        setPaymentMethods(pmRes.data || [])
         setLoading(false)
     }
 
@@ -194,6 +208,24 @@ export function InvoicesPage() {
     const handleToggleFactura = async (invoiceId: string, value: boolean) => {
         await supabase.from('invoices').update({ requires_cfdi: value }).eq('id', invoiceId)
         setInvoices(prev => prev.map(i => i.id === invoiceId ? { ...i, requires_cfdi: value } : i))
+    }
+
+    const handleMarkAsPaid = async () => {
+        if (!orgId || !payInvoice) return
+        setPayingInvoice(true)
+        const { error } = await supabase.rpc('register_payment_full', {
+            p_client_id: payInvoice.client_id,
+            p_org_id:    orgId,
+            p_amount:    payInvoice.balance_due,
+            p_method_id: payMethodId || null,
+            p_date:      new Date().toISOString().split('T')[0],
+            p_notes:     `Pago completo - ${payInvoice.invoice_number || ''}`,
+        })
+        if (error) console.error('mark_as_paid error:', error)
+        setPayInvoice(null)
+        setPayMethodId('')
+        setPayingInvoice(false)
+        fetchAll()
     }
 
     // ─── Render ────────────────────────────────────────────────────────────────
@@ -302,14 +334,21 @@ export function InvoicesPage() {
                                         <td style={{ padding: '16px', color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)', fontWeight: inv.balance_due > 0 ? 600 : 400 }}>
                                             {fmt(inv.balance_due)}
                                         </td>
-                                        <td style={{ padding: '16px', textAlign: 'center' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={inv.requires_cfdi}
-                                                onChange={e => handleToggleFactura(inv.id, e.target.checked)}
-                                                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--color-accent)' }}
+                                        <td style={{ padding: '16px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                                            <button
+                                                onClick={() => handleToggleFactura(inv.id, !inv.requires_cfdi)}
                                                 title={inv.requires_cfdi ? 'Requiere factura fiscal' : 'No requiere factura fiscal'}
-                                            />
+                                                style={{
+                                                    width: 20, height: 20, borderRadius: '50%', cursor: 'pointer',
+                                                    border: inv.requires_cfdi ? 'none' : '2px solid var(--color-text-tertiary)',
+                                                    background: inv.requires_cfdi ? 'var(--color-accent)' : 'transparent',
+                                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                                    transition: 'all 0.2s ease',
+                                                    padding: 0,
+                                                }}
+                                            >
+                                                {inv.requires_cfdi && <CheckCircle2 size={20} style={{ color: 'white' }} />}
+                                            </button>
                                         </td>
                                         <td style={{ padding: '16px' }}>
                                             <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: STATUS_CONFIG[inv.status]?.bg, color: STATUS_CONFIG[inv.status]?.color }}>
@@ -323,7 +362,12 @@ export function InvoicesPage() {
                                                     <MoreVertical size={16} />
                                                 </button>
                                                 {activeDropdownId === inv.id && (
-                                                    <div className="dropdown" style={{ position: 'absolute', right: 0, top: '100%', width: '180px', zIndex: 100, marginTop: '8px' }}>
+                                                    <div className="dropdown" style={{ position: 'absolute', right: 0, top: '100%', width: '200px', zIndex: 100, marginTop: '8px' }}>
+                                                        {['open', 'partial'].includes(inv.status) && (
+                                                            <button className="dropdown-item" style={{ gap: 8, color: 'var(--color-success)' }} onClick={() => { setPayInvoice(inv); setActiveDropdownId(null) }}>
+                                                                <CheckCircle2 size={14} /> Marcar como pagado
+                                                            </button>
+                                                        )}
                                                         {inv.status !== 'void' && (
                                                             <button className="dropdown-item" style={{ gap: 8, color: '#f87171' }} onClick={() => { handleVoid(inv.id); setActiveDropdownId(null) }}>
                                                                 <X size={14} /> Anular factura
@@ -438,8 +482,57 @@ export function InvoicesPage() {
                 </div>
             )}
 
+            {/* ── Mark as Paid Modal ────────────────────────────────────── */}
+            {payInvoice && (
+                <div className="modal-overlay" onClick={() => setPayInvoice(null)}>
+                    <div className="modal" style={{ maxWidth: '420px', width: '95vw' }} onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Marcar como pagado</h3>
+                            <button className="modal-close" onClick={() => setPayInvoice(null)}><X size={16} /></button>
+                        </div>
+                        <div style={{ marginBottom: 'var(--space-md)' }}>
+                            <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0 }}>
+                                Se registrará un pago por el saldo pendiente de esta factura.
+                            </p>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                            <div style={{ background: 'var(--color-glass)', borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Factura</div>
+                                <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'monospace' }}>{payInvoice.invoice_number || '—'}</div>
+                            </div>
+                            <div style={{ background: 'var(--color-glass)', borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Monto a pagar</div>
+                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-success)' }}>{fmt(payInvoice.balance_due)}</div>
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Método de pago</label>
+                            <select className="form-input" value={payMethodId} onChange={e => setPayMethodId(e.target.value)}>
+                                <option value="">Seleccionar método...</option>
+                                {paymentMethods.map(pm => (
+                                    <option key={pm.id} value={pm.id}>{pm.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="modal-actions">
+                            <button type="button" className="btn btn-secondary" onClick={() => setPayInvoice(null)}>Cancelar</button>
+                            <button type="button" className="btn btn-primary" disabled={payingInvoice} onClick={handleMarkAsPaid}>
+                                {payingInvoice ? <span className="spinner" /> : 'Confirmar pago'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ── Invoice Detail Modal ──────────────────────────────────── */}
-            <InvoiceDetailModal invoiceId={selectedInvoiceId} onClose={() => setSelectedInvoiceId(null)} />
+            <InvoiceDetailModal
+                invoiceId={selectedInvoiceId}
+                onClose={() => setSelectedInvoiceId(null)}
+                onMarkAsPaid={(inv) => {
+                    const matched = invoices.find(i => i.id === inv.id)
+                    if (matched) setPayInvoice({ ...matched, balance_due: inv.balance_due })
+                }}
+            />
         </div>
     )
 }

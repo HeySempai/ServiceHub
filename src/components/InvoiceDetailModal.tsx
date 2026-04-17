@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X, Receipt } from 'lucide-react'
+import { X, Receipt, CheckCircle2 } from 'lucide-react'
 
 const fmt = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0)
 
@@ -51,9 +51,10 @@ interface PaymentDetail {
 interface Props {
     invoiceId: string | null
     onClose: () => void
+    onMarkAsPaid?: (inv: InvoiceDetail) => void
 }
 
-export function InvoiceDetailModal({ invoiceId, onClose }: Props) {
+export function InvoiceDetailModal({ invoiceId, onClose, onMarkAsPaid }: Props) {
     const [inv, setInv] = useState<InvoiceDetail | null>(null)
     const [payments, setPayments] = useState<PaymentDetail[]>([])
     const [loading, setLoading] = useState(false)
@@ -228,6 +229,11 @@ export function InvoiceDetailModal({ invoiceId, onClose }: Props) {
                         {/* Actions */}
                         <div className="modal-actions" style={{ marginTop: 'var(--space-lg)' }}>
                             <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
+                            {onMarkAsPaid && ['open', 'partial'].includes(inv.status) && inv.balance_due > 0 && (
+                                <button className="btn btn-primary" style={{ gap: 6 }} onClick={() => { onClose(); onMarkAsPaid(inv) }}>
+                                    <CheckCircle2 size={14} /> Marcar como pagado ({fmt(inv.balance_due)})
+                                </button>
+                            )}
                         </div>
                     </>
                 )}
