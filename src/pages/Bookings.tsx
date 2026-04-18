@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays, DollarSign, AlertCircle, Sun } from 'lucide-react'
@@ -56,6 +57,7 @@ const STATUS_CONFIG: Record<string, { bg: string, text: string, label: string, c
 
 export function BookingsPage() {
     const { orgMember, memberLabel, memberLabelPlural } = useAuth()
+    const navigate = useNavigate()
     const calendarRef = useRef<FullCalendar>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -1034,10 +1036,17 @@ export function BookingsPage() {
                                             </div>
                                         </td>
                                         <td style={{ padding: '16px' }}>
-                                            <div style={{ fontWeight: 500 }}>{b.clients?.first_name} {b.clients?.last_name}</div>
+                                            <div style={{ fontWeight: 500 }}>
+                                                <span
+                                                    style={{ cursor: 'pointer', transition: 'color 0.15s' }}
+                                                    onClick={e => { e.stopPropagation(); navigate(`/clients?highlight=${b.client_id}`) }}
+                                                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
+                                                    onMouseLeave={e => (e.currentTarget.style.color = '')}
+                                                >{b.clients?.first_name} {b.clients?.last_name}</span>
+                                            </div>
                                             {b.clients?.phone && (
-                                                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 4, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <Smartphone size={12} />
+                                                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <Smartphone size={11} />
                                                     {b.clients?.phone}
                                                 </div>
                                             )}
@@ -1075,7 +1084,7 @@ export function BookingsPage() {
                                                 </>
                                             })()}
                                         </td>
-                                        <td style={{ padding: '16px', color: 'var(--color-text-secondary)' }}>
+                                        <td style={{ padding: '16px', color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
                                             {b.org_members?.display_name}
                                         </td>
                                         <td style={{ padding: '16px' }}>
@@ -1094,16 +1103,16 @@ export function BookingsPage() {
                                                 }
                                                 const inv = bookingInvoices.get(b.id)
                                                 if (!inv || inv.status === 'open') {
-                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(245, 158, 11, 0.15)', color: '#fcd34d' }}>Abierta</span>
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(234,179,8,0.15)', color: '#eab308' }}>Abierta</span>
                                                 }
                                                 if (inv.status === 'partial') {
-                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(249, 115, 22, 0.15)', color: '#fdba74' }}>Parcial</span>
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(249,115,22,0.15)', color: '#f97316' }}>Parcial</span>
                                                 }
                                                 if (inv.status === 'paid') {
-                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>Pagada</span>
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(34,197,94,0.15)', color: 'var(--color-success)' }}>Pagada</span>
                                                 }
                                                 if (inv.status === 'void') {
-                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(239, 68, 68, 0.15)', color: '#f87171' }}>Anulada</span>
+                                                    return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(239,68,68,0.10)', color: '#f87171' }}>Anulada</span>
                                                 }
                                                 return <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-tertiary)' }}>—</span>
                                             })()}

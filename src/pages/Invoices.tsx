@@ -351,7 +351,7 @@ export function InvoicesPage() {
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('balance')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'balance' ? 'var(--color-text-primary)' : undefined }}>Restante {sortField === 'balance' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
                                 </th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'center' }}>Factura</th>
+                                <th style={{ padding: '12px 8px', fontWeight: 500, textAlign: 'center' }}>Factura</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Estado</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'right' }}>Acciones</th>
                             </tr>
@@ -380,14 +380,17 @@ export function InvoicesPage() {
                                             )}
                                         </td>
                                         <td style={{ padding: '16px', fontSize: '13px', color: 'var(--color-text-secondary)', maxWidth: 180 }}>
-                                            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstLine}</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-accent)', flexShrink: 0 }} />
+                                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstLine}</span>
+                                            </div>
                                         </td>
-                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600 }}>{fmt(inv.total)}</td>
-                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: inv.status === 'paid' ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>{fmt(inv.amount_paid)}</td>
-                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)' }}>
+                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 500 }}>{fmt(inv.total)}</td>
+                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 500, color: inv.status === 'paid' ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>{fmt(inv.amount_paid)}</td>
+                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 500, color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)', opacity: inv.balance_due === 0 ? 0.5 : 1 }}>
                                             {fmt(inv.balance_due)}
                                         </td>
-                                        <td style={{ padding: '16px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                                        <td style={{ padding: '16px 8px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                                             <button
                                                 onClick={() => handleToggleFactura(inv.id, !inv.requires_cfdi)}
                                                 title={inv.requires_cfdi ? 'Requiere factura fiscal' : 'No requiere factura fiscal'}

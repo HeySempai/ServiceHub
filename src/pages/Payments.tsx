@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { CreditCard, ChevronDown, ChevronUp, Search, X, CalendarDays, Plus, MoreVertical, Pencil, Trash2, DollarSign } from 'lucide-react'
+import { InvoiceDetailModal } from '@/components/InvoiceDetailModal'
 import { CalendarPicker } from '../components/CalendarPicker'
 
 interface Payment {
@@ -73,6 +74,7 @@ export function PaymentsPage() {
 
     // Row menu
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null)
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
 
     // Pay modal
@@ -397,7 +399,10 @@ export function PaymentsPage() {
                                                         const tooltipText = inv ? `${firstLine}\nTotal: ${fmt(inv.total)} · ${invDate}` : ''
                                                         return (
                                                             <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }} title={tooltipText}>
-                                                                <span style={{ color: 'var(--color-accent)', fontFamily: 'monospace' }}>{invNum}</span>
+                                                                <span
+                                                                    style={{ color: 'var(--color-accent)', fontFamily: 'monospace', cursor: 'pointer' }}
+                                                                    onClick={() => setSelectedInvoiceId(a.invoice_id)}
+                                                                >{invNum}</span>
                                                                 <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>{fmt(a.amount_allocated)}</span>
                                                             </div>
                                                         )
@@ -634,6 +639,9 @@ export function PaymentsPage() {
                     </div>
                 </div>
             )}
+
+            {/* Invoice Detail Modal */}
+            <InvoiceDetailModal invoiceId={selectedInvoiceId} onClose={() => { setSelectedInvoiceId(null); fetchAll() }} />
         </div>
     )
 }
