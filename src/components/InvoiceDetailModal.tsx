@@ -61,6 +61,13 @@ export function InvoiceDetailModal({ invoiceId, onClose, onMarkAsPaid }: Props) 
     const [paymentsLoading, setPaymentsLoading] = useState(false)
 
     useEffect(() => {
+        if (!invoiceId) return
+        const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+        document.addEventListener('keydown', handler)
+        return () => document.removeEventListener('keydown', handler)
+    }, [invoiceId, onClose])
+
+    useEffect(() => {
         if (!invoiceId) { setInv(null); setPayments([]); return }
         setLoading(true)
         setPaymentsLoading(true)
