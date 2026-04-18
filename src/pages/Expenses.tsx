@@ -40,9 +40,12 @@ export function ExpensesPage() {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     })
 
+    const currentMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
+
     const [form, setForm] = useState({
         category_id: '',
         date: new Date().toISOString().split('T')[0],
+        period: currentMonth(),
         description: '',
         vendor: '',
         total: '',
@@ -117,7 +120,7 @@ export function ExpensesPage() {
 
     const openCreate = () => {
         setEditingExpense(null)
-        setForm({ category_id: categories[0]?.id || '', date: new Date().toISOString().split('T')[0], description: '', vendor: '', total: '', payment_method: 'Efectivo', has_receipt: false })
+        setForm({ category_id: categories[0]?.id || '', date: new Date().toISOString().split('T')[0], period: currentMonth(), description: '', vendor: '', total: '', payment_method: 'Efectivo', has_receipt: false })
         setShowModal(true)
     }
 
@@ -126,6 +129,7 @@ export function ExpensesPage() {
         setForm({
             category_id: ex.category_id,
             date: ex.date,
+            period: ex.period.slice(0, 7),
             description: ex.description || '',
             vendor: ex.vendor || '',
             total: String(ex.total),
@@ -146,9 +150,6 @@ export function ExpensesPage() {
         if (!orgId) return
         setSaving(true)
 
-        const dateObj = new Date(form.date + 'T12:00:00')
-        const period = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-01`
-
         const totalVal = parseFloat(form.total) || 0
         const subtotalVal = Math.round((totalVal / 1.16) * 100) / 100
 
@@ -156,7 +157,7 @@ export function ExpensesPage() {
             org_id: orgId,
             category_id: form.category_id,
             date: form.date,
-            period,
+            period: form.period + '-01',
             description: form.description || null,
             vendor: form.vendor || null,
             subtotal: subtotalVal,
@@ -331,7 +332,7 @@ export function ExpensesPage() {
                             <button className="modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
                         </div>
                         <form onSubmit={handleSave}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-md)' }}>
                                 <div className="form-group">
                                     <label className="form-label">Categoría *</label>
                                     <select className="form-input" required value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value })}>
@@ -340,8 +341,12 @@ export function ExpensesPage() {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Fecha *</label>
+                                    <label className="form-label">Fecha de pago *</label>
                                     <input className="form-input" type="date" required value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Periodo *</label>
+                                    <input className="form-input" type="month" required value={form.period} onChange={e => setForm({ ...form, period: e.target.value })} />
                                 </div>
                             </div>
                             <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
