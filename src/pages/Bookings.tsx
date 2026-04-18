@@ -978,6 +978,7 @@ export function BookingsPage() {
                                                 onRangeSelect={(start, end) => {
                                                     setStartDate(start);
                                                     setEndDate(end);
+                                                    if (start && end) setShowDateDropdown(false);
                                                 }}
                                             />
                                         </div>
