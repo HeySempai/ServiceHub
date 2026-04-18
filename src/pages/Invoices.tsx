@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { FileText, X, MoreVertical, ChevronDown, Receipt, Plus, Trash2, Search, CheckCircle2 } from 'lucide-react'
+import { FileText, X, MoreVertical, ChevronDown, Receipt, Plus, Trash2, Search, CheckCircle2, CalendarDays } from 'lucide-react'
 import { InvoiceDetailModal } from '@/components/InvoiceDetailModal'
+import { CalendarPicker } from '@/components/CalendarPicker'
 
 interface InvoiceLine {
     id?: string
@@ -72,6 +73,10 @@ export function InvoicesPage() {
     const [filterStatus, setFilterStatus]   = useState('all')
     const [search, setSearch]               = useState('')
     const [saving, setSaving]               = useState(false)
+    const [dateFrom, setDateFrom]           = useState('')
+    const [dateTo, setDateTo]               = useState('')
+    const [showDateDd, setShowDateDd]       = useState(false)
+    const dateDdRef = useRef<HTMLDivElement>(null)
 
     // Detail modal
     const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
@@ -120,6 +125,9 @@ export function InvoicesPage() {
             if (!t.closest('.dropdown') && !t.closest('.btn-icon') && !t.closest('.btn-secondary')) {
                 setActiveDropdownId(null)
             }
+            if (dateDdRef.current && !dateDdRef.current.contains(t as Node)) {
+                setShowDateDd(false)
+            }
         }
         document.addEventListener('mousedown', handler)
         return () => document.removeEventListener('mousedown', handler)
@@ -131,6 +139,8 @@ export function InvoicesPage() {
             if (filterStatus === 'open' && !['open', 'partial'].includes(inv.status)) return false
             if (filterStatus !== 'open' && inv.status !== filterStatus) return false
         }
+        if (dateFrom && inv.issued_at < dateFrom) return false
+        if (dateTo && inv.issued_at > dateTo) return false
         if (search.trim()) {
             const q = search.toLowerCase()
             const name = `${inv.clients?.first_name} ${inv.clients?.last_name}`.toLowerCase()
@@ -239,21 +249,6 @@ export function InvoicesPage() {
                 </div>
             </div>
 
-            {/* KPIs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
-                {[
-                    { label: 'Total emitido', value: fmt(invoices.filter(i => i.status !== 'void').reduce((s, i) => s + i.total, 0)), color: 'var(--color-text-primary)' },
-                    { label: 'Por cobrar',       value: fmt(invoices.filter(i => ['open','partial'].includes(i.status)).reduce((s, i) => s + i.balance_due, 0)), color: '#eab308' },
-                    { label: 'Cobrado',          value: fmt(invoices.reduce((s, i) => s + i.amount_paid, 0)), color: 'var(--color-success)' },
-                    { label: 'Comprobantes abiertos',value: String(invoices.filter(i => ['open','partial'].includes(i.status)).length), color: '#f97316' },
-                ].map(kpi => (
-                    <div key={kpi.label} className="card" style={{ padding: 'var(--space-lg)' }}>
-                        <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>{kpi.label}</div>
-                        <div style={{ fontSize: '22px', fontWeight: 700, color: kpi.color }}>{kpi.value}</div>
-                    </div>
-                ))}
-            </div>
-
             {/* Filters */}
             <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '280px' }}>
@@ -283,6 +278,38 @@ export function InvoicesPage() {
                         {label}
                     </button>
                 ))}
+
+                {/* Date range picker */}
+                <div style={{ position: 'relative' }} ref={dateDdRef}>
+                    <button className="btn btn-secondary"
+                        style={{ borderRadius: '16px', height: '32px', gap: '8px', minWidth: '180px', justifyContent: 'space-between', border: 'none', fontSize: '12px', background: (dateFrom || dateTo) ? 'var(--color-accent-soft)' : undefined }}
+                        onClick={() => setShowDateDd(d => !d)}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <CalendarDays size={14} />
+                            <span>
+                                {!dateFrom && !dateTo ? 'Rango de fechas' : (() => {
+                                    const fmtD = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
+                                    if (dateFrom && dateTo && dateFrom !== dateTo) return `${fmtD(dateFrom)} – ${fmtD(dateTo)}`
+                                    if (dateFrom) return fmtD(dateFrom)
+                                    return 'Rango de fechas'
+                                })()}
+                            </span>
+                        </div>
+                        <ChevronDown size={14} />
+                    </button>
+                    {showDateDd && (
+                        <div className="dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, width: '310px', zIndex: 100, paddingBottom: 8 }}>
+                            <CalendarPicker startDate={dateFrom} endDate={dateTo}
+                                onRangeSelect={(start, end) => { setDateFrom(start); setDateTo(end); if (start && end) setShowDateDd(false) }} />
+                            {(dateFrom || dateTo) && (
+                                <button className="dropdown-item" style={{ color: '#f87171', fontSize: '12px', marginTop: 4 }}
+                                    onClick={() => { setDateFrom(''); setDateTo(''); setShowDateDd(false) }}>
+                                    <X size={12} /> Limpiar fechas
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Table */}
