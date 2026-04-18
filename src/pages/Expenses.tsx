@@ -179,14 +179,9 @@ export function ExpensesPage() {
     return (
         <div className="animate-in">
             {/* Header */}
-            <div className="page-header page-header-actions" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div>
-                    <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Gastos</h2>
-                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{filteredExpenses.length} gastos en {monthLabel}</p>
-                </div>
-                <button className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }} onClick={openCreate}>
-                    <Plus size={16} /> Nuevo gasto
-                </button>
+            <div className="page-header" style={{ marginBottom: 'var(--space-lg)' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Gastos</h2>
+                <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{filteredExpenses.length} gastos en {monthLabel}</p>
             </div>
 
             {/* KPI Cards */}
@@ -223,7 +218,7 @@ export function ExpensesPage() {
             </div>
 
             {/* Toolbar */}
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                 {/* Month navigator */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-bg-card)', border: '1px solid var(--color-glass-border)', borderRadius: '16px', padding: '0 8px', height: '36px' }}>
                     <button className="btn-icon" style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => changeMonth(-1)}>
@@ -256,6 +251,11 @@ export function ExpensesPage() {
                         </div>
                     )}
                 </div>
+
+                <div style={{ flex: 1 }} />
+                <button className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }} onClick={openCreate}>
+                    <Plus size={15} /> Nuevo gasto
+                </button>
             </div>
 
             {/* Content */}

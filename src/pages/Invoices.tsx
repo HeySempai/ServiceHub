@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { FileText, X, MoreVertical, ChevronDown, Receipt, Plus, Trash2, Search, CheckCircle2, CalendarDays } from 'lucide-react'
+import { FileText, X, MoreVertical, ChevronDown, ChevronUp, Receipt, Plus, Trash2, Search, CheckCircle2, CalendarDays } from 'lucide-react'
 import { InvoiceDetailModal } from '@/components/InvoiceDetailModal'
 import { CalendarPicker } from '@/components/CalendarPicker'
 
@@ -96,6 +96,15 @@ export function InvoicesPage() {
     })
     const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()])
 
+    // Sorting
+    type SortField = 'date' | 'client' | 'total' | 'balance'
+    const [sortField, setSortField] = useState<SortField>('date')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+    const toggleSort = (field: SortField) => {
+        if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+        else { setSortField(field); setSortDir('desc') }
+    }
+
     const orgId = orgMember?.org_id
 
     const fetchAll = async () => {
@@ -149,6 +158,13 @@ export function InvoicesPage() {
             return name.includes(q) || num.includes(q) || svc.includes(q)
         }
         return true
+    }).sort((a, b) => {
+        let cmp = 0
+        if (sortField === 'date') cmp = a.issued_at.localeCompare(b.issued_at)
+        if (sortField === 'client') cmp = `${a.clients?.first_name}${a.clients?.last_name}`.localeCompare(`${b.clients?.first_name}${b.clients?.last_name}`)
+        if (sortField === 'total') cmp = a.total - b.total
+        if (sortField === 'balance') cmp = a.balance_due - b.balance_due
+        return sortDir === 'asc' ? cmp : -cmp
     })
 
 
@@ -242,14 +258,12 @@ export function InvoicesPage() {
     return (
         <div className="animate-in">
             {/* Header */}
-            <div className="page-header page-header-actions" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div>
-                    <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Comprobantes</h2>
-                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{invoices.length} comprobantes en total</p>
-                </div>
+            <div className="page-header" style={{ marginBottom: 'var(--space-lg)' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Comprobantes</h2>
+                <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{invoices.length} comprobantes en total</p>
             </div>
 
-            {/* Filters */}
+            {/* Toolbar */}
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '320px' }}>
                     <Search size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
@@ -322,13 +336,21 @@ export function InvoicesPage() {
                     <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead style={{ borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
                             <tr>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>No.</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Cliente</th>
+                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Folio</th>
+                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('date')}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'date' ? 'var(--color-text-primary)' : undefined }}>Fecha {sortField === 'date' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
+                                </th>
+                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('client')}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'client' ? 'var(--color-text-primary)' : undefined }}>Cliente {sortField === 'client' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
+                                </th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Servicio</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Fecha</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Total</th>
+                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('total')}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'total' ? 'var(--color-text-primary)' : undefined }}>Total {sortField === 'total' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
+                                </th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Pagado</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Saldo</th>
+                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('balance')}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'balance' ? 'var(--color-text-primary)' : undefined }}>Saldo {sortField === 'balance' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
+                                </th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'center' }}>Factura</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Estado</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'right' }}>Acciones</th>
@@ -341,7 +363,14 @@ export function InvoicesPage() {
                                 const credit = clients.find(c => c.id === inv.client_id)?.credit_balance || 0
                                 return (
                                     <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-glass-border)', cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
-                                        <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '13px', color: 'var(--color-accent)' }}>{inv.invoice_number || '—'}</td>
+                                        <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>
+                                            <span style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--color-text-tertiary)', background: 'var(--color-glass)', padding: '2px 7px', borderRadius: 5 }}>
+                                                {inv.invoice_number || '—'}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '16px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                                            {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </td>
                                         <td style={{ padding: '16px' }}>
                                             <div style={{ fontWeight: 500 }}>{inv.clients?.first_name} {inv.clients?.last_name}</div>
                                             {credit > 0 && (
@@ -352,9 +381,6 @@ export function InvoicesPage() {
                                         </td>
                                         <td style={{ padding: '16px', fontSize: '13px', color: 'var(--color-text-secondary)', maxWidth: 180 }}>
                                             <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstLine}</div>
-                                        </td>
-                                        <td style={{ padding: '16px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                                            {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                                         </td>
                                         <td style={{ padding: '16px', fontWeight: 600 }}>{fmt(inv.total)}</td>
                                         <td style={{ padding: '16px', color: 'var(--color-success)' }}>{fmt(inv.amount_paid)}</td>

@@ -164,8 +164,8 @@ export function ServicesPage() {
                             {showArchived ? 'Ocultar archivados' : 'Ver archivados'}
                         </button>
                     )}
-                    <button className="btn btn-primary" onClick={openCreate}>
-                        <Plus size={16} /> Nuevo servicio
+                    <button className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }} onClick={openCreate}>
+                        <Plus size={15} /> Nuevo servicio
                     </button>
                 </div>
             </div>

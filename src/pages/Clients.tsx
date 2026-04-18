@@ -287,14 +287,9 @@ export function ClientsPage() {
 
     return (
         <div className="animate-in">
-            <div className="page-header page-header-actions" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div>
-                    <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Clientes</h2>
-                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{clients.length} clientes registrados</p>
-                </div>
-                <button id="btn-new-client" className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }} onClick={() => setShowModal(true)}>
-                    <Plus size={16} /> Nuevo cliente
-                </button>
+            <div className="page-header" style={{ marginBottom: 'var(--space-lg)' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Clientes</h2>
+                <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>{clients.length} clientes registrados</p>
             </div>
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
@@ -358,6 +353,10 @@ export function ClientsPage() {
 
                     <button className="btn btn-secondary" onClick={exportToCSV} title="Exportar CSV" style={{ borderRadius: '16px', height: '36px', gap: '8px', border: 'none' }}>
                         <Download size={16} /> Exportar
+                    </button>
+                    <div style={{ flex: 1 }} />
+                    <button id="btn-new-client" className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }} onClick={() => setShowModal(true)}>
+                        <Plus size={15} /> Nuevo cliente
                     </button>
                 </div>
             </div>

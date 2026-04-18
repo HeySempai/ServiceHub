@@ -64,9 +64,7 @@ export function PaymentsPage() {
     const [filterMethod, setFilterMethod]   = useState('all')
     const [dateFrom, setDateFrom]           = useState('')
     const [dateTo, setDateTo]               = useState('')
-    const [showMethodDd, setShowMethodDd]   = useState(false)
     const [showDateDd, setShowDateDd]       = useState(false)
-    const methodRef = useRef<HTMLDivElement>(null)
     const dateDdRef = useRef<HTMLDivElement>(null)
 
     // Sorting
@@ -121,7 +119,6 @@ export function PaymentsPage() {
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             const t = e.target as HTMLElement
-            if (methodRef.current && !methodRef.current.contains(t)) setShowMethodDd(false)
             if (dateDdRef.current && !dateDdRef.current.contains(t)) setShowDateDd(false)
             if (menuRef.current && !menuRef.current.contains(t)) setActiveMenuId(null)
             if (payDateRef.current && !payDateRef.current.contains(t)) setShowPayDatePicker(false)
@@ -259,18 +256,12 @@ export function PaymentsPage() {
     return (
         <div className="animate-in">
             {/* Header */}
-            <div className="page-header page-header-actions" style={{ marginBottom: 'var(--space-lg)' }}>
-                <div>
-                    <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Pagos</h2>
-                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>
-                        {filtered.length} {filtered.length === 1 ? 'registro' : 'registros'}
-                        {hasFilters ? ' (filtrado)' : ''}
-                    </p>
-                </div>
-                <button className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }}
-                    onClick={() => openPayModal()}>
-                    <Plus size={15} /> Registrar Pago
-                </button>
+            <div className="page-header" style={{ marginBottom: 'var(--space-lg)' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 500 }}>Pagos</h2>
+                <p style={{ color: 'var(--color-text-tertiary)', fontSize: '14px' }}>
+                    {filtered.length} {filtered.length === 1 ? 'registro' : 'registros'}
+                    {hasFilters ? ' (filtrado)' : ''}
+                </p>
             </div>
 
             {/* Toolbar */}
@@ -282,6 +273,18 @@ export function PaymentsPage() {
                         value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
 
+                {/* Method quick buttons */}
+                {[
+                    { key: 'all', label: 'Todos' },
+                    ...paymentMethods.map(m => ({ key: m.id, label: m.name })),
+                ].map(({ key, label }) => (
+                    <button key={key} className="btn btn-secondary"
+                        style={{ borderRadius: '16px', height: '36px', fontSize: '13px', border: 'none', background: filterMethod === key ? 'var(--color-accent)' : undefined, color: filterMethod === key ? 'white' : undefined }}
+                        onClick={() => setFilterMethod(key)}>
+                        {label}
+                    </button>
+                ))}
+
                 {/* Date range picker */}
                 <div style={{ position: 'relative' }} ref={dateDdRef}>
                     <button className="btn btn-secondary"
@@ -290,11 +293,11 @@ export function PaymentsPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                             <CalendarDays size={14} />
                             <span>
-                                {!dateFrom && !dateTo ? 'Seleccionar rango' : (() => {
+                                {!dateFrom && !dateTo ? 'Rango de fechas' : (() => {
                                     const fmtD = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
                                     if (dateFrom && dateTo && dateFrom !== dateTo) return `${fmtD(dateFrom)} – ${fmtD(dateTo)}`
                                     if (dateFrom) return fmtD(dateFrom)
-                                    return 'Seleccionar rango'
+                                    return 'Rango de fechas'
                                 })()}
                             </span>
                         </div>
@@ -314,32 +317,11 @@ export function PaymentsPage() {
                     )}
                 </div>
 
-                {/* Method filter */}
-                <div style={{ position: 'relative' }} ref={methodRef}>
-                    <button className="btn btn-secondary"
-                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '150px', justifyContent: 'space-between', border: 'none', fontSize: '13px' }}
-                        onClick={() => setShowMethodDd(d => !d)}>
-                        <span>
-                            {filterMethod === 'all' ? 'Todo método' : paymentMethods.find(m => m.id === filterMethod)?.name || 'Método'}
-                        </span>
-                        <ChevronDown size={14} />
-                    </button>
-                    {showMethodDd && (
-                        <div className="dropdown" style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, width: '190px', zIndex: 100 }}>
-                            <button className="dropdown-item" onClick={() => { setFilterMethod('all'); setShowMethodDd(false) }}>Todo método</button>
-                            {paymentMethods.map(m => (
-                                <button key={m.id} className="dropdown-item" onClick={() => { setFilterMethod(m.id); setShowMethodDd(false) }}>{m.name}</button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {hasFilters && (
-                    <button className="btn btn-secondary" style={{ borderRadius: '16px', height: '36px', gap: 6, border: 'none' }}
-                        onClick={() => { setSearch(''); setFilterMethod('all'); setDateFrom(''); setDateTo('') }}>
-                        <X size={13} /> Limpiar
-                    </button>
-                )}
+                <div style={{ flex: 1 }} />
+                <button className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }}
+                    onClick={() => openPayModal()}>
+                    <Plus size={15} /> Registrar Pago
+                </button>
             </div>
 
             {/* Table */}
