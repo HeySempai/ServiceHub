@@ -667,7 +667,7 @@ export function ClientsPage() {
                                     style={{
                                         flex: 1, padding: '14px 8px', border: 'none', cursor: 'pointer', background: 'transparent',
                                         fontSize: '13px', fontWeight: detailTab === t.key ? 600 : 400,
-                                        color: detailTab === t.key ? 'white' : 'rgba(255,255,255,0.4)',
+                                        color: detailTab === t.key ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
                                         borderBottom: detailTab === t.key ? '2px solid var(--color-accent)' : '2px solid transparent',
                                         transition: 'all 0.15s',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -675,8 +675,8 @@ export function ClientsPage() {
                                     {t.label}
                                     {!detailLoading && t.count > 0 && (
                                         <span style={{
-                                            fontSize: '10px', background: detailTab === t.key ? 'var(--color-accent)' : 'rgba(255,255,255,0.1)',
-                                            color: detailTab === t.key ? 'white' : 'rgba(255,255,255,0.5)',
+                                            fontSize: '10px', background: detailTab === t.key ? 'var(--color-accent)' : 'var(--color-glass-hover)',
+                                            color: detailTab === t.key ? 'white' : 'var(--color-text-secondary)',
                                             padding: '1px 6px', borderRadius: 10, fontWeight: 600,
                                         }}>{t.count}</span>
                                     )}
