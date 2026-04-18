@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { CreditCard, TrendingUp, ChevronDown, ChevronUp, Search, X, CalendarDays, Plus, MoreVertical, Pencil, Trash2, DollarSign } from 'lucide-react'
+import { CreditCard, ChevronDown, ChevronUp, Search, X, CalendarDays, Plus, MoreVertical, Pencil, Trash2, DollarSign } from 'lucide-react'
 import { CalendarPicker } from '../components/CalendarPicker'
 
 interface Payment {
@@ -242,15 +242,7 @@ export function PaymentsPage() {
         fetchAll()
     }
 
-    // ─── KPIs ─────────────────────────────────────────────────────────────────
     const totalFiltered = filtered.reduce((s, p) => s + p.amount, 0)
-    const allTimeTotal  = payments.reduce((s, p) => s + p.amount, 0)
-    const byMethod: Record<string, number> = {}
-    filtered.forEach(p => {
-        const n = p.payment_methods?.name || 'Sin método'
-        byMethod[n] = (byMethod[n] || 0) + p.amount
-    })
-
     const hasFilters = search || filterMethod !== 'all' || dateFrom || dateTo
     const payClient  = clients.find(c => c.id === payClientId)
     const payAmount  = parseFloat(payForm.amount) || 0
@@ -281,40 +273,12 @@ export function PaymentsPage() {
                 </button>
             </div>
 
-            {/* KPI Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-lg)' }}>
-                <div className="card" style={{ padding: 'var(--space-lg)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <TrendingUp size={16} style={{ color: 'var(--color-success)' }} />
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            {hasFilters ? 'Total filtrado' : 'Total cobrado'}
-                        </span>
-                    </div>
-                    <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-success)' }}>{fmt(totalFiltered)}</div>
-                </div>
-                <div className="card" style={{ padding: 'var(--space-lg)' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Total histórico</div>
-                    <div style={{ fontSize: '24px', fontWeight: 700 }}>{fmt(allTimeTotal)}</div>
-                </div>
-                <div className="card" style={{ padding: 'var(--space-lg)' }}>
-                    <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Por método</div>
-                    {Object.entries(byMethod).length === 0 ? (
-                        <span style={{ fontSize: '13px', color: 'var(--color-text-tertiary)' }}>Sin datos</span>
-                    ) : Object.entries(byMethod).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, total]) => (
-                        <div key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: 4 }}>
-                            <span style={{ color: 'var(--color-text-secondary)' }}>{name}</span>
-                            <span style={{ fontWeight: 600 }}>{fmt(total)}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
             {/* Toolbar */}
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '320px' }}>
                     <Search size={15} style={{ position: 'absolute', left: 11, top: 11, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
                     <input className="form-input" style={{ paddingLeft: 34, height: '36px' }}
-                        placeholder="Buscar cliente, factura, notas..."
+                        placeholder="Buscar cliente, comprobante, notas..."
                         value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
 
@@ -401,10 +365,10 @@ export function PaymentsPage() {
                                 <th style={thStyle('client')} onClick={() => toggleSort('client')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Cliente <SortIcon field="client" /></span>
                                 </th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>Facturas abonadas</th>
                                 <th style={thStyle('method')} onClick={() => toggleSort('method')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Método <SortIcon field="method" /></span>
                                 </th>
+                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>Comprobante</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)' }}>Notas</th>
                                 <th style={{ ...thStyle('amount'), textAlign: 'right' }} onClick={() => toggleSort('amount')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>Monto <SortIcon field="amount" /></span>
@@ -431,23 +395,6 @@ export function PaymentsPage() {
                                         <td style={{ padding: '14px 16px', fontWeight: 500 }}>
                                             {p.clients?.first_name} {p.clients?.last_name}
                                         </td>
-                                        <td style={{ padding: '14px 16px', fontSize: '12px' }}>
-                                            {isSaldoFavor ? (
-                                                <span style={{ color: 'var(--color-success)', fontStyle: 'italic' }}>Saldo a favor</span>
-                                            ) : (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                                    {allocs.map((a, i) => {
-                                                        const invNum = invoices.find(inv => inv.id === a.invoice_id)?.invoice_number || a.invoice_id.slice(0, 8)
-                                                        return (
-                                                            <div key={i} style={{ display: 'flex', gap: 8 }}>
-                                                                <span style={{ color: 'var(--color-accent)', fontFamily: 'monospace' }}>{invNum}</span>
-                                                                <span style={{ color: 'var(--color-success)' }}>{fmt(a.amount_allocated)}</span>
-                                                            </div>
-                                                        )
-                                                    })}
-                                                </div>
-                                            )}
-                                        </td>
                                         <td style={{ padding: '14px 16px' }}>
                                             {mName ? (
                                                 <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: mColor + '22', color: mColor }}>
@@ -455,10 +402,43 @@ export function PaymentsPage() {
                                                 </span>
                                             ) : <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>}
                                         </td>
+                                        <td style={{ padding: '14px 16px', fontSize: '12px' }}>
+                                            {isSaldoFavor ? (
+                                                <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>Saldo a favor</span>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                                    {allocs.map((a, i) => {
+                                                        const inv = invoices.find(inv => inv.id === a.invoice_id)
+                                                        const invNum = inv?.invoice_number || a.invoice_id.slice(0, 8)
+                                                        const firstLine = inv?.invoice_lines?.sort((x, y) => x.sort_order - y.sort_order)[0]?.description || ''
+                                                        const invDate = inv ? new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+                                                        const tooltipText = inv ? `${firstLine}\nTotal: ${fmt(inv.total)} · ${invDate}` : ''
+                                                        return (
+                                                            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }} title={tooltipText}>
+                                                                <span style={{ color: 'var(--color-accent)', fontFamily: 'monospace' }}>{invNum}</span>
+                                                                <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>{fmt(a.amount_allocated)}</span>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td style={{ padding: '14px 16px', color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
                                             {isSaldoFavor ? '—' : (p.notes || '—')}
                                         </td>
-                                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, color: 'var(--color-success)', fontSize: '16px' }}>
+                                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, fontSize: '16px',
+                                            color: isSaldoFavor ? 'var(--color-text-tertiary)'
+                                                : (() => {
+                                                    const totalAllocated = allocs.reduce((s, a) => s + a.amount_allocated, 0)
+                                                    if (p.amount > totalAllocated && totalAllocated > 0) return '#3b82f6'
+                                                    const allInvoicesPaid = allocs.every(a => {
+                                                        const inv = invoices.find(inv => inv.id === a.invoice_id)
+                                                        return inv?.status === 'paid'
+                                                    })
+                                                    if (allInvoicesPaid) return 'var(--color-success)'
+                                                    return '#eab308'
+                                                })()
+                                        }}>
                                             {fmt(p.amount)}
                                         </td>
                                         <td style={{ padding: '14px 8px', textAlign: 'right' }}>
@@ -526,7 +506,7 @@ export function PaymentsPage() {
                                 <div style={{ marginBottom: 'var(--space-md)', padding: 'var(--space-md)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--color-glass-border)' }}>
                                     <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Resumen del cliente</div>
                                     {invoices.filter(i => i.client_id === payClientId && ['open', 'partial'].includes(i.status)).length === 0 ? (
-                                        <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', margin: 0 }}>Sin facturas pendientes</p>
+                                        <p style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', margin: 0 }}>Sin comprobantes pendientes</p>
                                     ) : (
                                         <>
                                             {invoices.filter(i => i.client_id === payClientId && ['open', 'partial'].includes(i.status))
