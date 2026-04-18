@@ -69,15 +69,20 @@ export function ClientsPage() {
 
     const orgId = orgMember?.org_id
 
+    const [clientDebts, setClientDebts] = useState<Record<string, number>>({})
+
     const fetchClients = async () => {
         if (!orgId) return
-        const { data } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('org_id', orgId)
-            .eq('active', true)
-            .order('last_name')
+        const [{ data }, { data: invData }] = await Promise.all([
+            supabase.from('clients').select('*').eq('org_id', orgId).eq('active', true).order('last_name'),
+            supabase.from('invoices').select('client_id, balance_due').eq('org_id', orgId).in('status', ['open', 'partial']),
+        ])
         setClients(data || [])
+        const debts: Record<string, number> = {}
+        ;(invData || []).forEach((inv: any) => {
+            debts[inv.client_id] = (debts[inv.client_id] || 0) + Number(inv.balance_due)
+        })
+        setClientDebts(debts)
         setLoading(false)
     }
 
@@ -376,7 +381,7 @@ export function ClientsPage() {
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Sexo</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Edad</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Teléfono</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Balance</th>
+                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Saldo</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>RFC</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'right' }}>Acciones</th>
                             </tr>
@@ -408,13 +413,14 @@ export function ClientsPage() {
                                         <td style={{ padding: '16px', color: 'var(--color-text-secondary)' }}>{age !== null ? `${age}a` : '—'}</td>
                                         <td style={{ padding: '16px', color: 'var(--color-text-secondary)' }}>{c.phone || '—'}</td>
                                         <td style={{ padding: '16px' }}>
-                                            {(c.credit_balance || 0) > 0 ? (
-                                                <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>
-                                                    {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(c.credit_balance)}
-                                                </span>
-                                            ) : (
-                                                <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>
-                                            )}
+                                            {(() => {
+                                                const saldo = (c.credit_balance || 0) - (clientDebts[c.id] || 0)
+                                                if (saldo === 0) return <span style={{ color: 'var(--color-text-tertiary)' }}>$0</span>
+                                                const formatted = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Math.abs(saldo))
+                                                return saldo > 0
+                                                    ? <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>+{formatted}</span>
+                                                    : <span style={{ color: '#f87171', fontWeight: 600 }}>-{formatted}</span>
+                                            })()}
                                         </td>
                                         <td style={{ padding: '16px', color: 'var(--color-text-tertiary)', fontFamily: 'monospace', fontSize: 'var(--font-size-sm)' }}>{c.rfc || '—'}</td>
                                         <td style={{ padding: '16px', textAlign: 'right' }}>
