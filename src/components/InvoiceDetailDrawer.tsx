@@ -100,7 +100,7 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
             <div style={{
                 position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 1101,
                 width: 480, maxWidth: '95vw',
-                background: '#141414',
+                background: 'var(--color-bg-secondary)',
                 borderLeft: '1px solid rgba(255,255,255,0.08)',
                 display: 'flex', flexDirection: 'column',
                 boxShadow: '-16px 0 48px rgba(0,0,0,0.5)',

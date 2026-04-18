@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { Save, Check, Upload, UserPlus, X, Mail, Calendar, ExternalLink, Loader, Users, Trash2, UserCheck, UserX } from 'lucide-react'
+import { Save, Check, Upload, UserPlus, X, Mail, Calendar, ExternalLink, Loader, Users, Trash2, UserCheck, UserX, Sun, Moon } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const BUSINESS_TYPES = [
     { value: 'clinic', label: 'Clínica' },
@@ -257,6 +258,7 @@ export function SettingsPage() {
     }
 
     const isOwner = orgMember?.role === 'owner'
+    const { theme, setTheme } = useTheme()
     const isAdminOrOwner = orgMember?.role === 'owner' || orgMember?.role === 'admin'
 
     const roleLabels: Record<string, string> = {
@@ -302,6 +304,35 @@ export function SettingsPage() {
                         <div style={{ padding: 'var(--space-sm) var(--space-md)', background: 'var(--color-glass)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-tertiary)' }}>Rol</span>
                             <span className="badge badge-confirmed">{roleLabels[orgMember?.role || ''] || orgMember?.role}</span>
+                        </div>
+
+                        {/* Theme selector */}
+                        <div style={{ padding: 'var(--space-sm) var(--space-md)', background: 'var(--color-glass)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-sm)' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-tertiary)' }}>Tema</span>
+                            <div style={{ display: 'flex', gap: 4, background: 'var(--color-bg-tertiary)', borderRadius: 'var(--radius-full)', padding: 3 }}>
+                                <button
+                                    onClick={() => setTheme('light')}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px',
+                                        borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
+                                        fontSize: '12px', fontWeight: 500, transition: 'all 0.2s',
+                                        background: theme === 'light' ? 'var(--color-accent)' : 'transparent',
+                                        color: theme === 'light' ? 'white' : 'var(--color-text-tertiary)',
+                                    }}>
+                                    <Sun size={13} /> Claro
+                                </button>
+                                <button
+                                    onClick={() => setTheme('dark')}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px',
+                                        borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
+                                        fontSize: '12px', fontWeight: 500, transition: 'all 0.2s',
+                                        background: theme === 'dark' ? 'var(--color-accent)' : 'transparent',
+                                        color: theme === 'dark' ? 'white' : 'var(--color-text-tertiary)',
+                                    }}>
+                                    <Moon size={13} /> Oscuro
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

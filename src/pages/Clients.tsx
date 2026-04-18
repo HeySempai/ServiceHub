@@ -581,13 +581,13 @@ export function ClientsPage() {
                     {/* Drawer panel */}
                     <div style={{
                         position: 'fixed', top: 0, right: 0, bottom: 0, width: '520px', maxWidth: '95vw',
-                        background: '#111118', borderLeft: '1px solid rgba(255,255,255,0.08)',
+                        background: 'var(--color-bg-secondary)', borderLeft: '1px solid var(--color-glass-border)',
                         zIndex: 201, display: 'flex', flexDirection: 'column',
                         boxShadow: '-12px 0 60px rgba(0,0,0,0.6)',
                     }}>
 
                         {/* ── Hero header ── */}
-                        <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #111118 100%)', padding: '28px 28px 0', flexShrink: 0 }}>
+                        <div style={{ background: 'var(--color-bg-tertiary)', padding: '28px 28px 0', flexShrink: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                                     {/* Avatar */}
@@ -660,7 +660,7 @@ export function ClientsPage() {
                         </div>
 
                         {/* ── Tab bar ── */}
-                        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#111118', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'var(--color-bg-secondary)', flexShrink: 0 }}>
                             {tabs.map(t => (
                                 <button key={t.key}
                                     onClick={() => setDetailTab(t.key)}
