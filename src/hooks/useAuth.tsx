@@ -9,7 +9,7 @@ interface OrgMember {
     display_name: string
     email: string
     can_be_booked: boolean
-    organizations: { id: string; name: string; slug: string; type: string; settings: any }
+    organizations: { id: string; name: string; slug: string; type: string; settings: any; logo_url: string | null }
 }
 
 interface AuthContextType {
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('Fetching org member for user_id:', userId)
         const { data, error } = await supabase
             .from('org_members')
-            .select('id, org_id, role, display_name, email, can_be_booked, organizations(id, name, slug, type, settings)')
+            .select('id, org_id, role, display_name, email, can_be_booked, organizations(id, name, slug, type, settings, logo_url)')
             .eq('user_id', userId)
             .eq('active', true)
             .limit(1)

@@ -40,13 +40,23 @@ export function Sidebar() {
         .toUpperCase()
         .slice(0, 2) || 'U'
 
+    const logoUrl = orgMember?.organizations?.logo_url
+    const orgName = orgMember?.organizations?.name || 'Mi Negocio'
+
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <div className="sidebar-logo">S</div>
+                {logoUrl ? (
+                    <img
+                        src={logoUrl}
+                        alt={orgName}
+                        style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                    />
+                ) : (
+                    <div className="sidebar-logo">S</div>
+                )}
                 <div className="sidebar-brand">
-                    <h1>ServiceHub</h1>
-                    <span>{orgMember?.organizations?.name || 'Mi Negocio'}</span>
+                    <h1>{orgName}</h1>
                 </div>
             </div>
 

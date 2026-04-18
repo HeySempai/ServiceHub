@@ -328,7 +328,7 @@ export function SettingsPage() {
                                 onClick={() => isOwner && fileInputRef.current?.click()}
                                 style={{
                                     width: 64, height: 64,
-                                    borderRadius: 'var(--radius-lg)',
+                                    borderRadius: '50%',
                                     background: logoUrl ? `url(${logoUrl}) center/cover` : 'var(--color-accent-soft)',
                                     border: '2px dashed var(--color-glass-border)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
