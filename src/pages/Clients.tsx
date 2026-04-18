@@ -4,6 +4,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { Users, Plus, Search, X, ChevronDown, Download, Filter, MoreVertical, Edit2, Phone, Mail, CalendarDays, CreditCard, FileText, Clock } from 'lucide-react'
 import { InvoiceDetailModal } from '@/components/InvoiceDetailModal'
 
+const fmt = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n || 0)
+
 interface ClientHistory {
     bookings: {
         id: string; start_at: string; status: string
@@ -67,15 +69,22 @@ export function ClientsPage() {
     const [detailTab, setDetailTab] = useState<'bookings' | 'invoices' | 'payments'>('bookings')
     const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
 
+    // Mark as paid
+    const [paymentMethods, setPaymentMethods] = useState<{ id: string; name: string }[]>([])
+    const [payInvoice, setPayInvoice] = useState<{ id: string; invoice_number: string | null; balance_due: number; client_id: string } | null>(null)
+    const [payMethodId, setPayMethodId] = useState('')
+    const [payingInvoice, setPayingInvoice] = useState(false)
+
     const orgId = orgMember?.org_id
 
     const [clientDebts, setClientDebts] = useState<Record<string, number>>({})
 
     const fetchClients = async () => {
         if (!orgId) return
-        const [{ data }, { data: invData }] = await Promise.all([
+        const [{ data }, { data: invData }, { data: pmData }] = await Promise.all([
             supabase.from('clients').select('*').eq('org_id', orgId).eq('active', true).order('last_name'),
             supabase.from('invoices').select('client_id, balance_due').eq('org_id', orgId).in('status', ['open', 'partial']),
+            supabase.from('payment_methods').select('id, name').eq('org_id', orgId).eq('active', true).order('sort_order'),
         ])
         setClients(data || [])
         const debts: Record<string, number> = {}
@@ -83,7 +92,27 @@ export function ClientsPage() {
             debts[inv.client_id] = (debts[inv.client_id] || 0) + Number(inv.balance_due)
         })
         setClientDebts(debts)
+        setPaymentMethods(pmData || [])
         setLoading(false)
+    }
+
+    const handleMarkAsPaid = async () => {
+        if (!orgId || !payInvoice) return
+        setPayingInvoice(true)
+        const { error } = await supabase.rpc('register_payment_full', {
+            p_client_id: payInvoice.client_id,
+            p_org_id:    orgId,
+            p_amount:    payInvoice.balance_due,
+            p_method_id: payMethodId || null,
+            p_date:      new Date().toISOString().split('T')[0],
+            p_notes:     `Pago completo - Comprobante ${payInvoice.invoice_number || ''}`,
+        })
+        if (error) console.error('mark_as_paid error:', error)
+        setPayInvoice(null)
+        setPayMethodId('')
+        setPayingInvoice(false)
+        fetchClients()
+        if (detailClient) openDetail(detailClient)
     }
 
     useEffect(() => { fetchClients() }, [orgId])
@@ -912,7 +941,56 @@ export function ClientsPage() {
             })()}
 
             {/* Invoice Detail Modal */}
-            <InvoiceDetailModal invoiceId={selectedInvoiceId} onClose={() => setSelectedInvoiceId(null)} />
+            <InvoiceDetailModal
+                invoiceId={selectedInvoiceId}
+                onClose={() => setSelectedInvoiceId(null)}
+                onMarkAsPaid={(inv) => {
+                    setSelectedInvoiceId(null)
+                    setPayInvoice({ id: inv.id, invoice_number: inv.invoice_number, balance_due: inv.balance_due, client_id: detailClient?.id || '' })
+                }}
+            />
+
+            {/* Mark as Paid Modal */}
+            {payInvoice && (
+                <div className="modal-overlay" onClick={() => setPayInvoice(null)}>
+                    <div className="modal" style={{ maxWidth: '420px', width: '95vw' }} onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Marcar como pagado</h3>
+                            <button className="modal-close" onClick={() => setPayInvoice(null)}><X size={16} /></button>
+                        </div>
+                        <div style={{ marginBottom: 'var(--space-md)' }}>
+                            <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: 0 }}>
+                                Se registrará un pago por el saldo pendiente de este comprobante.
+                            </p>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                            <div style={{ background: 'var(--color-glass)', borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Comprobante</div>
+                                <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'monospace' }}>{payInvoice.invoice_number || '—'}</div>
+                            </div>
+                            <div style={{ background: 'var(--color-glass)', borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
+                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Monto a pagar</div>
+                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-success)' }}>{fmt(payInvoice.balance_due)}</div>
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Método de pago</label>
+                            <select className="form-input" value={payMethodId} onChange={e => setPayMethodId(e.target.value)}>
+                                <option value="">Seleccionar método...</option>
+                                {paymentMethods.map(pm => (
+                                    <option key={pm.id} value={pm.id}>{pm.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="modal-actions">
+                            <button type="button" className="btn btn-secondary" onClick={() => setPayInvoice(null)}>Cancelar</button>
+                            <button type="button" className="btn btn-primary" disabled={payingInvoice} onClick={handleMarkAsPaid}>
+                                {payingInvoice ? <span className="spinner" /> : 'Confirmar pago'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
