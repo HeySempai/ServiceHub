@@ -826,24 +826,26 @@ export function ClientsPage() {
                                             </div>
                                             {/* Info */}
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'monospace' }}>
-                                                    {inv.invoice_number || inv.id.slice(0, 8)}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'var(--color-glass-hover)', color: 'var(--color-text-tertiary)', padding: '1px 7px', borderRadius: 4 }}>
+                                                        {inv.invoice_number || inv.id.slice(0, 8)}
+                                                    </span>
+                                                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: 6, background: st.color + '1a', color: st.color, fontWeight: 500 }}>
+                                                        {st.label}
+                                                    </span>
                                                 </div>
-                                                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 2 }}>
+                                                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 4 }}>
                                                     {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 </div>
                                             </div>
                                             {/* Right */}
                                             <div style={{ textAlign: 'right', flexShrink: 0 }}>
                                                 <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-primary)' }}>{fmtMXN(inv.total)}</div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginTop: 3 }}>
-                                                    {inv.balance_due > 0 && (
-                                                        <span style={{ fontSize: '11px', color: '#f97316' }}>Pendiente {fmtMXN(inv.balance_due)}</span>
-                                                    )}
-                                                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: 6, background: st.color + '1a', color: st.color, fontWeight: 500 }}>
-                                                        {st.label}
-                                                    </span>
-                                                </div>
+                                                {inv.balance_due > 0 && (
+                                                    <div style={{ fontSize: '11px', color: '#f97316', marginTop: 3 }}>
+                                                        Pendiente {fmtMXN(inv.balance_due)}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     )
