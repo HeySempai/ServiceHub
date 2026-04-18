@@ -275,7 +275,7 @@ export function InvoicesPage() {
                     { key: 'all',  label: 'Todos' },
                     { key: 'open', label: 'Abiertos' },
                     { key: 'paid', label: 'Pagados' },
-                    { key: 'cfdi', label: 'Para Facturar' },
+                    { key: 'cfdi', label: 'Solicitó Factura' },
                 ] as { key: string; label: string }[]).map(({ key, label }) => (
                     <button key={key} className="btn btn-secondary"
                         style={{ borderRadius: '16px', height: '32px', fontSize: '12px', border: 'none', background: filterStatus === key ? 'var(--color-accent)' : undefined, color: filterStatus === key ? 'white' : undefined }}
