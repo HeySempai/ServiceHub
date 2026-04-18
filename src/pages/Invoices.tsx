@@ -382,9 +382,9 @@ export function InvoicesPage() {
                                         <td style={{ padding: '16px', fontSize: '13px', color: 'var(--color-text-secondary)', maxWidth: 180 }}>
                                             <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstLine}</div>
                                         </td>
-                                        <td style={{ padding: '16px', fontWeight: 600 }}>{fmt(inv.total)}</td>
-                                        <td style={{ padding: '16px', color: 'var(--color-success)' }}>{fmt(inv.amount_paid)}</td>
-                                        <td style={{ padding: '16px', color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)', fontWeight: inv.balance_due > 0 ? 600 : 400 }}>
+                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600 }}>{fmt(inv.total)}</td>
+                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: 'var(--color-success)' }}>{fmt(inv.amount_paid)}</td>
+                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)' }}>
                                             {fmt(inv.balance_due)}
                                         </td>
                                         <td style={{ padding: '16px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>

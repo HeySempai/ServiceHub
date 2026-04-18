@@ -408,7 +408,7 @@ export function PaymentsPage() {
                                         <td style={{ padding: '14px 16px', color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
                                             {isSaldoFavor ? '—' : (p.notes || '—')}
                                         </td>
-                                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700, fontSize: '16px',
+                                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: '14px',
                                             color: isSaldoFavor ? 'var(--color-text-tertiary)'
                                                 : (() => {
                                                     const totalAllocated = allocs.reduce((s, a) => s + a.amount_allocated, 0)
@@ -452,7 +452,7 @@ export function PaymentsPage() {
                                 <td colSpan={5} style={{ padding: '12px 16px', color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 500 }}>
                                     Total {hasFilters ? 'filtrado' : 'general'}
                                 </td>
-                                <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 700, fontSize: '18px', color: 'var(--color-success)' }}>
+                                <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '14px', color: 'var(--color-success)' }}>
                                     {fmt(totalFiltered)}
                                 </td>
                                 <td />
