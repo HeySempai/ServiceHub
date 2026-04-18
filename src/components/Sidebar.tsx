@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -10,6 +11,8 @@ import {
     Receipt,
     Settings,
     LogOut,
+    PanelLeftClose,
+    PanelLeftOpen,
 } from 'lucide-react'
 
 const operationItems = [
@@ -27,6 +30,14 @@ const managementItems = [
 export function Sidebar() {
     const { user, orgMember, signOut } = useAuth()
     const navigate = useNavigate()
+    const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
+
+    const toggleCollapse = () => {
+        const next = !collapsed
+        setCollapsed(next)
+        localStorage.setItem('sidebar-collapsed', String(next))
+        document.documentElement.style.setProperty('--sidebar-current', next ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)')
+    }
 
     const handleSignOut = async () => {
         await signOut()
@@ -44,8 +55,8 @@ export function Sidebar() {
     const orgName = orgMember?.organizations?.name || 'Mi Negocio'
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-header">
+        <aside className="sidebar" style={{ width: collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)' }}>
+            <div className="sidebar-header" style={{ justifyContent: collapsed ? 'center' : undefined, padding: collapsed ? 'var(--space-lg) var(--space-sm)' : undefined }}>
                 {logoUrl ? (
                     <img
                         src={logoUrl}
@@ -55,59 +66,78 @@ export function Sidebar() {
                 ) : (
                     <div className="sidebar-logo">S</div>
                 )}
-                <div className="sidebar-brand">
-                    <h1>{orgName}</h1>
-                </div>
+                {!collapsed && (
+                    <div className="sidebar-brand">
+                        <h1>{orgName}</h1>
+                    </div>
+                )}
             </div>
 
-            <nav className="sidebar-nav">
-                <span className="sidebar-section-label">General</span>
-                <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <nav className="sidebar-nav" style={collapsed ? { alignItems: 'center', padding: '0 var(--space-xs)' } : undefined}>
+                {!collapsed && <span className="sidebar-section-label">General</span>}
+                <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Dashboard" style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}>
                     <LayoutDashboard />
-                    <span>Dashboard</span>
+                    {!collapsed && <span>Dashboard</span>}
                 </NavLink>
 
-                <span className="sidebar-section-label">Operaciones</span>
+                {!collapsed && <span className="sidebar-section-label">Operaciones</span>}
                 {operationItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
+                        title={item.label}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}
                     >
                         <item.icon />
-                        <span>{item.label}</span>
+                        {!collapsed && <span>{item.label}</span>}
                     </NavLink>
                 ))}
 
-                <span className="sidebar-section-label">Gestión</span>
+                {!collapsed && <span className="sidebar-section-label">Gestión</span>}
                 {managementItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
+                        title={item.label}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}
                     >
                         <item.icon />
-                        <span>{item.label}</span>
+                        {!collapsed && <span>{item.label}</span>}
                     </NavLink>
                 ))}
 
                 <div style={{ marginTop: 'auto', paddingTop: 'var(--space-md)' }}>
-                    <span className="sidebar-section-label">Sistema</span>
-                    <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                    {!collapsed && <span className="sidebar-section-label">Sistema</span>}
+                    <NavLink to="/settings" title="Configuración" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}>
                         <Settings />
-                        <span>Configuración</span>
+                        {!collapsed && <span>Configuración</span>}
                     </NavLink>
+                    <button
+                        onClick={toggleCollapse}
+                        className="nav-item"
+                        title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+                        style={collapsed ? { justifyContent: 'center', padding: '10px', border: 'none', width: '100%', cursor: 'pointer' } : { border: 'none', width: '100%', cursor: 'pointer' }}
+                    >
+                        {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+                        {!collapsed && <span>Colapsar</span>}
+                    </button>
                 </div>
             </nav>
 
             <div className="sidebar-footer">
-                <div className="user-info" onClick={handleSignOut} title="Cerrar sesión">
+                <div className="user-info" onClick={handleSignOut} title="Cerrar sesión" style={collapsed ? { justifyContent: 'center', padding: '12px' } : undefined}>
                     <div className="user-avatar">{initials}</div>
-                    <div className="user-details">
-                        <span className="name">{orgMember?.display_name || user?.email}</span>
-                        <span className="role">{orgMember?.role || 'usuario'}</span>
-                    </div>
-                    <LogOut style={{ width: 16, height: 16, marginLeft: 'auto', opacity: 0.4 }} />
+                    {!collapsed && (
+                        <>
+                            <div className="user-details">
+                                <span className="name">{orgMember?.display_name || user?.email}</span>
+                                <span className="role">{orgMember?.role || 'usuario'}</span>
+                            </div>
+                            <LogOut style={{ width: 16, height: 16, marginLeft: 'auto', opacity: 0.4 }} />
+                        </>
+                    )}
                 </div>
             </div>
         </aside>

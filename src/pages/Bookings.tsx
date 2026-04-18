@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays, DollarSign, AlertCircle, Sun } from 'lucide-react'
 import { CalendarPicker } from '../components/CalendarPicker'
+import { ClientDetailDrawer } from '../components/ClientDetailDrawer'
 import { DateTimePicker } from '../components/DateTimePicker'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -57,8 +57,8 @@ const STATUS_CONFIG: Record<string, { bg: string, text: string, label: string, c
 
 export function BookingsPage() {
     const { orgMember, memberLabel, memberLabelPlural } = useAuth()
-    const navigate = useNavigate()
     const calendarRef = useRef<FullCalendar>(null)
+    const [detailClientId, setDetailClientId] = useState<string | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
 
@@ -1039,7 +1039,7 @@ export function BookingsPage() {
                                             <div style={{ fontWeight: 500 }}>
                                                 <span
                                                     style={{ cursor: 'pointer', transition: 'color 0.15s' }}
-                                                    onClick={e => { e.stopPropagation(); navigate(`/clients?highlight=${b.client_id}`) }}
+                                                    onClick={e => { e.stopPropagation(); setDetailClientId(b.client_id) }}
                                                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-accent)')}
                                                     onMouseLeave={e => (e.currentTarget.style.color = '')}
                                                 >{b.clients?.first_name} {b.clients?.last_name}</span>
@@ -1533,6 +1533,8 @@ export function BookingsPage() {
                     </div>
                 </div>
             )}
+
+            <ClientDetailDrawer clientId={detailClientId} orgId={orgMember?.org_id} onClose={() => setDetailClientId(null)} />
         </div>
     )
 }
