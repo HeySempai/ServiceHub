@@ -13,6 +13,12 @@ interface Stats {
     pendingInvoices: number
 }
 
+interface PendingInvoice {
+    id: string
+    balance_due: number
+    clients: { first_name: string; last_name: string }
+}
+
 interface RecentBooking {
     id: string
     start_at: string
@@ -26,6 +32,7 @@ export function DashboardPage() {
     const { orgMember, memberLabel } = useAuth()
     const [stats, setStats] = useState<Stats>({ clientCount: 0, bookingsTodayCount: 0, monthRevenue: 0, pendingInvoices: 0 })
     const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([])
+    const [pendingInvoices, setPendingInvoices] = useState<PendingInvoice[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -40,19 +47,21 @@ export function DashboardPage() {
                 supabase.from('clients').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('active', true),
                 supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('org_id', orgId).gte('start_at', today + 'T00:00:00').lte('start_at', today + 'T23:59:59'),
                 supabase.from('payments').select('amount').eq('org_id', orgId).gte('date', monthStart.split('T')[0]),
-                supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('org_id', orgId).in('status', ['open', 'partial']),
+                supabase.from('invoices').select('id, balance_due, clients(first_name, last_name)').eq('org_id', orgId).in('status', ['open', 'partial']).order('balance_due', { ascending: false }),
                 supabase.from('bookings').select('id, start_at, status, clients(first_name, last_name), services(name), org_members(display_name)')
                     .eq('org_id', orgId).order('start_at', { ascending: false }).limit(8),
             ])
 
             const monthRevenue = revenueRes.data?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
 
+            const pendingData = (pendingRes.data as unknown as PendingInvoice[]) || []
             setStats({
                 clientCount: clientsRes.count || 0,
                 bookingsTodayCount: bookingsTodayRes.count || 0,
                 monthRevenue,
-                pendingInvoices: pendingRes.count || 0,
+                pendingInvoices: pendingData.length,
             })
+            setPendingInvoices(pendingData)
             setRecentBookings((recentRes.data as unknown as RecentBooking[]) || [])
             setLoading(false)
         }
@@ -125,9 +134,13 @@ export function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="card stat-card warning">
+                <div className="card stat-card warning"
+                    title={pendingInvoices.length > 0
+                        ? pendingInvoices.map(inv => `${inv.clients?.first_name} ${inv.clients?.last_name}: ${formatCurrency(Number(inv.balance_due))}`).join('\n')
+                        : 'Sin comprobantes pendientes'}
+                >
                     <div className="card-header">
-                        <span className="card-title">Facturas pendientes</span>
+                        <span className="card-title">Comprobantes pendientes</span>
                         <div className="card-icon" style={{ background: 'var(--color-warning-soft)', color: 'var(--color-warning)' }}>
                             <Clock />
                         </div>
