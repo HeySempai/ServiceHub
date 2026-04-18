@@ -250,12 +250,12 @@ export function InvoicesPage() {
             </div>
 
             {/* Filters */}
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '280px' }}>
-                    <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '320px' }}>
+                    <Search size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
                     <input
                         className="form-input"
-                        style={{ paddingLeft: 32, height: '32px', fontSize: '13px', borderRadius: '16px' }}
+                        style={{ paddingLeft: 34, height: '36px', borderRadius: '16px' }}
                         placeholder="Buscar cliente, folio, servicio..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -273,7 +273,7 @@ export function InvoicesPage() {
                     { key: 'cfdi', label: 'Solicitó Factura' },
                 ] as { key: string; label: string }[]).map(({ key, label }) => (
                     <button key={key} className="btn btn-secondary"
-                        style={{ borderRadius: '16px', height: '32px', fontSize: '12px', border: 'none', background: filterStatus === key ? 'var(--color-accent)' : undefined, color: filterStatus === key ? 'white' : undefined }}
+                        style={{ borderRadius: '16px', height: '36px', fontSize: '13px', border: 'none', background: filterStatus === key ? 'var(--color-accent)' : undefined, color: filterStatus === key ? 'white' : undefined }}
                         onClick={() => setFilterStatus(key)}>
                         {label}
                     </button>
@@ -282,7 +282,7 @@ export function InvoicesPage() {
                 {/* Date range picker */}
                 <div style={{ position: 'relative' }} ref={dateDdRef}>
                     <button className="btn btn-secondary"
-                        style={{ borderRadius: '16px', height: '32px', gap: '8px', minWidth: '180px', justifyContent: 'space-between', border: 'none', fontSize: '12px', background: (dateFrom || dateTo) ? 'var(--color-accent-soft)' : undefined }}
+                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '200px', justifyContent: 'space-between', border: 'none', fontSize: '13px', background: (dateFrom || dateTo) ? 'var(--color-accent-soft)' : undefined }}
                         onClick={() => setShowDateDd(d => !d)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                             <CalendarDays size={14} />

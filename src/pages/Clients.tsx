@@ -297,16 +297,16 @@ export function ClientsPage() {
                 </button>
             </div>
 
-            <div style={{ marginBottom: 'var(--space-md)', display: 'flex', gap: 'var(--space-md)', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', flex: 1, minWidth: 260, maxWidth: 360 }}>
-                    <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)' }} />
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '320px' }}>
+                    <Search size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)' }} />
                     <input
                         id="search-clients"
                         className="form-input"
                         placeholder="Buscar por nombre, correo o teléfono..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        style={{ paddingLeft: 36, borderRadius: '16px', height: '36px' }}
+                        style={{ paddingLeft: 34, borderRadius: '16px', height: '36px' }}
                     />
                 </div>
 
@@ -315,10 +315,10 @@ export function ClientsPage() {
                     <div style={{ position: 'relative' }}>
                         <button
                             className="btn btn-secondary"
-                            style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '120px', justifyContent: 'space-between', border: 'none' }}
+                            style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '120px', justifyContent: 'space-between', border: 'none', fontSize: '13px' }}
                             onClick={() => setActiveDropdownId(activeDropdownId === 'gender' ? null : 'gender')}
                         >
-                            <span style={{ fontSize: '13px' }}>
+                            <span>
                                 {filterGender === 'all' ? 'Todo Sexo' : filterGender === 'M' ? 'Hombre' : filterGender === 'F' ? 'Mujer' : 'Otro'}
                             </span>
                             <ChevronDown size={14} />
@@ -337,10 +337,10 @@ export function ClientsPage() {
                     <div style={{ position: 'relative' }}>
                         <button
                             className="btn btn-secondary"
-                            style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '130px', justifyContent: 'space-between', border: 'none' }}
+                            style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '130px', justifyContent: 'space-between', border: 'none', fontSize: '13px' }}
                             onClick={() => setActiveDropdownId(activeDropdownId === 'age' ? null : 'age')}
                         >
-                            <span style={{ fontSize: '13px' }}>
+                            <span>
                                 {filterAge === 'all' ? 'Toda Edad' : filterAge}
                             </span>
                             <ChevronDown size={14} />

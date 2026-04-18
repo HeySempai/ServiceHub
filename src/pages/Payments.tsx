@@ -276,8 +276,8 @@ export function PaymentsPage() {
             {/* Toolbar */}
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '320px' }}>
-                    <Search size={15} style={{ position: 'absolute', left: 11, top: 11, color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
-                    <input className="form-input" style={{ paddingLeft: 34, height: '36px' }}
+                    <Search size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
+                    <input className="form-input" style={{ paddingLeft: 34, height: '36px', borderRadius: '16px' }}
                         placeholder="Buscar cliente, comprobante, notas..."
                         value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
@@ -285,11 +285,11 @@ export function PaymentsPage() {
                 {/* Date range picker */}
                 <div style={{ position: 'relative' }} ref={dateDdRef}>
                     <button className="btn btn-secondary"
-                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '200px', justifyContent: 'space-between', border: 'none', background: (dateFrom || dateTo) ? 'var(--color-accent-soft)' : undefined }}
+                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '200px', justifyContent: 'space-between', border: 'none', fontSize: '13px', background: (dateFrom || dateTo) ? 'var(--color-accent-soft)' : undefined }}
                         onClick={() => setShowDateDd(d => !d)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                             <CalendarDays size={14} />
-                            <span style={{ fontSize: '13px' }}>
+                            <span>
                                 {!dateFrom && !dateTo ? 'Seleccionar rango' : (() => {
                                     const fmtD = (d: string) => new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
                                     if (dateFrom && dateTo && dateFrom !== dateTo) return `${fmtD(dateFrom)} – ${fmtD(dateTo)}`
@@ -317,9 +317,9 @@ export function PaymentsPage() {
                 {/* Method filter */}
                 <div style={{ position: 'relative' }} ref={methodRef}>
                     <button className="btn btn-secondary"
-                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '150px', justifyContent: 'space-between', border: 'none' }}
+                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '150px', justifyContent: 'space-between', border: 'none', fontSize: '13px' }}
                         onClick={() => setShowMethodDd(d => !d)}>
-                        <span style={{ fontSize: '13px' }}>
+                        <span>
                             {filterMethod === 'all' ? 'Todo método' : paymentMethods.find(m => m.id === filterMethod)?.name || 'Método'}
                         </span>
                         <ChevronDown size={14} />

@@ -839,10 +839,10 @@ export function BookingsPage() {
                     <div style={{ paddingBottom: 'var(--space-md)', borderBottom: '1px solid var(--color-glass-border)', marginBottom: 'var(--space-md)' }}>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                             <div style={{ position: 'relative', flex: 1, minWidth: '180px', maxWidth: '320px' }}>
-                                <Search size={16} style={{ position: 'absolute', left: 12, top: 10, color: 'var(--color-text-tertiary)' }} />
+                                <Search size={15} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
                                 <input
                                     className="form-input"
-                                    style={{ paddingLeft: 36 }}
+                                    style={{ paddingLeft: 34, height: '36px', borderRadius: '16px' }}
                                     placeholder="Buscar paciente o servicio..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -870,7 +870,7 @@ export function BookingsPage() {
                                 <div className="dropdown-container" style={{ position: 'relative' }}>
                                     <button
                                         className="btn btn-secondary"
-                                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '160px', justifyContent: 'space-between' }}
+                                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '160px', justifyContent: 'space-between', border: 'none' }}
                                         onClick={() => setActiveDropdownId(activeDropdownId === 'status' ? null : 'status')}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
@@ -904,7 +904,7 @@ export function BookingsPage() {
                                 <div className="dropdown-container" style={{ position: 'relative' }}>
                                     <button
                                         className="btn btn-secondary"
-                                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '180px', justifyContent: 'space-between' }}
+                                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '180px', justifyContent: 'space-between', border: 'none' }}
                                         onClick={() => setActiveDropdownId(activeDropdownId === 'provider' ? null : 'provider')}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
@@ -941,7 +941,7 @@ export function BookingsPage() {
                                 <div style={{ position: 'relative' }} ref={dateDropdownRef}>
                                     <button
                                         className="btn btn-secondary"
-                                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '220px', justifyContent: 'space-between' }}
+                                        style={{ borderRadius: '16px', height: '36px', gap: '8px', minWidth: '200px', justifyContent: 'space-between', border: 'none' }}
                                         onClick={() => setShowDateDropdown(!showDateDropdown)}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
