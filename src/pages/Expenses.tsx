@@ -45,7 +45,7 @@ export function ExpensesPage() {
         date: new Date().toISOString().split('T')[0],
         description: '',
         vendor: '',
-        subtotal: '',
+        total: '',
         payment_method: 'Efectivo',
         has_receipt: false,
     })
@@ -117,7 +117,7 @@ export function ExpensesPage() {
 
     const openCreate = () => {
         setEditingExpense(null)
-        setForm({ category_id: categories[0]?.id || '', date: new Date().toISOString().split('T')[0], description: '', vendor: '', subtotal: '', payment_method: 'Efectivo', has_receipt: false })
+        setForm({ category_id: categories[0]?.id || '', date: new Date().toISOString().split('T')[0], description: '', vendor: '', total: '', payment_method: 'Efectivo', has_receipt: false })
         setShowModal(true)
     }
 
@@ -128,7 +128,7 @@ export function ExpensesPage() {
             date: ex.date,
             description: ex.description || '',
             vendor: ex.vendor || '',
-            subtotal: String(ex.subtotal),
+            total: String(ex.total),
             payment_method: ex.payment_method || 'Efectivo',
             has_receipt: ex.has_receipt,
         })
@@ -149,6 +149,9 @@ export function ExpensesPage() {
         const dateObj = new Date(form.date + 'T12:00:00')
         const period = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-01`
 
+        const totalVal = parseFloat(form.total) || 0
+        const subtotalVal = Math.round((totalVal / 1.16) * 100) / 100
+
         const payload = {
             org_id: orgId,
             category_id: form.category_id,
@@ -156,7 +159,7 @@ export function ExpensesPage() {
             period,
             description: form.description || null,
             vendor: form.vendor || null,
-            subtotal: parseFloat(form.subtotal),
+            subtotal: subtotalVal,
             payment_method: form.payment_method,
             has_receipt: form.has_receipt,
         }
@@ -351,8 +354,8 @@ export function ExpensesPage() {
                                     <input className="form-input" placeholder="Ej. Office Depot" value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label">Subtotal (antes de IVA) *</label>
-                                    <input className="form-input" type="number" step="0.01" min="0" required placeholder="0.00" value={form.subtotal} onChange={e => setForm({ ...form, subtotal: e.target.value })} />
+                                    <label className="form-label">Total (con IVA) *</label>
+                                    <input className="form-input" type="number" step="0.01" min="0" required placeholder="0.00" value={form.total} onChange={e => setForm({ ...form, total: e.target.value })} />
                                 </div>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-md)', alignItems: 'end' }}>
@@ -365,25 +368,32 @@ export function ExpensesPage() {
                                 <div className="form-group">
                                     <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '14px', color: 'var(--color-text-secondary)', userSelect: 'none' }}>
                                         <input type="checkbox" checked={form.has_receipt} onChange={e => setForm({ ...form, has_receipt: e.target.checked })} style={{ width: 16, height: 16 }} />
-                                        Tiene factura / comprobante
+                                        Con Factura
                                     </label>
                                 </div>
                             </div>
-                            {form.subtotal && (
-                                <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--color-glass-border)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: 6 }}>
-                                        <span style={{ color: 'var(--color-text-tertiary)' }}>Subtotal</span>
-                                        <span>{fmt(parseFloat(form.subtotal) || 0)}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: 6 }}>
-                                        <span style={{ color: 'var(--color-text-tertiary)' }}>IVA (16%)</span>
-                                        <span>{fmt((parseFloat(form.subtotal) || 0) * 0.16)}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid var(--color-glass-border)', paddingTop: 6 }}>
-                                        <span>Total</span>
-                                        <span>{fmt((parseFloat(form.subtotal) || 0) * 1.16)}</span>
-                                    </div>
-                                </div>
+                            {form.total && (
+                                (() => {
+                                    const t = parseFloat(form.total) || 0
+                                    const sub = Math.round((t / 1.16) * 100) / 100
+                                    const iva = Math.round((t - sub) * 100) / 100
+                                    return (
+                                        <div style={{ marginTop: 'var(--space-md)', padding: 'var(--space-md)', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--color-glass-border)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: 6 }}>
+                                                <span style={{ color: 'var(--color-text-tertiary)' }}>Subtotal</span>
+                                                <span>{fmt(sub)}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: 6 }}>
+                                                <span style={{ color: 'var(--color-text-tertiary)' }}>IVA (16%)</span>
+                                                <span>{fmt(iva)}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px solid var(--color-glass-border)', paddingTop: 6 }}>
+                                                <span>Total</span>
+                                                <span>{fmt(t)}</span>
+                                            </div>
+                                        </div>
+                                    )
+                                })()
                             )}
                             <div className="modal-actions">
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
