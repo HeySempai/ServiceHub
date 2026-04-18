@@ -349,7 +349,7 @@ export function InvoicesPage() {
                                 </th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Pagado</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('balance')}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'balance' ? 'var(--color-text-primary)' : undefined }}>Saldo {sortField === 'balance' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'balance' ? 'var(--color-text-primary)' : undefined }}>Restante {sortField === 'balance' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
                                 </th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'center' }}>Factura</th>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Estado</th>
@@ -383,7 +383,7 @@ export function InvoicesPage() {
                                             <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstLine}</div>
                                         </td>
                                         <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600 }}>{fmt(inv.total)}</td>
-                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: 'var(--color-success)' }}>{fmt(inv.amount_paid)}</td>
+                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: inv.status === 'paid' ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>{fmt(inv.amount_paid)}</td>
                                         <td style={{ padding: '16px', fontSize: '14px', fontWeight: 600, color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)' }}>
                                             {fmt(inv.balance_due)}
                                         </td>
