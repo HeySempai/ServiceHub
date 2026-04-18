@@ -595,28 +595,28 @@ export function ClientsPage() {
                                         width: 56, height: 56, borderRadius: '50%',
                                         background: 'linear-gradient(135deg, var(--color-accent), #7c3aed)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '20px', fontWeight: 700, color: 'white', flexShrink: 0,
+                                        fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)', flexShrink: 0,
                                         boxShadow: '0 0 20px rgba(99,102,241,0.4)',
                                     }}>
                                         {initials}
                                     </div>
                                     <div>
-                                        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'white', lineHeight: 1.2 }}>
+                                        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1.2 }}>
                                             {detailClient.first_name} {detailClient.last_name}
                                         </h3>
                                         <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
                                             {detailClient.phone && (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                                                     <Phone size={11} /> {detailClient.phone}
                                                 </span>
                                             )}
                                             {detailClient.email && (
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                                                     <Mail size={11} /> {detailClient.email}
                                                 </span>
                                             )}
                                             {detailClient.birth_date && (
-                                                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+                                                <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
                                                     {calculateAge(detailClient.birth_date)} años
                                                 </span>
                                             )}
@@ -624,11 +624,11 @@ export function ClientsPage() {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: 6 }}>
-                                    <button className="btn btn-secondary" style={{ fontSize: '12px', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)' }}
+                                    <button className="btn btn-secondary" style={{ fontSize: '12px', padding: '5px 12px', border: '1px solid var(--color-glass-border)', background: 'var(--color-glass-hover)' }}
                                         onClick={() => { handleEdit(detailClient); setDetailClient(null) }}>
                                         <Edit2 size={12} /> Editar
                                     </button>
-                                    <button className="btn-icon" style={{ color: 'rgba(255,255,255,0.4)' }} onClick={() => setDetailClient(null)}>
+                                    <button className="btn-icon" style={{ color: 'var(--color-text-tertiary)' }} onClick={() => setDetailClient(null)}>
                                         <X size={18} />
                                     </button>
                                 </div>
@@ -636,31 +636,31 @@ export function ClientsPage() {
 
                             {/* Stats row */}
                             {detailHistory && (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: 'rgba(255,255,255,0.06)', borderRadius: '12px 12px 0 0', overflow: 'hidden', marginTop: 4 }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: 'var(--color-glass-hover)', borderRadius: '12px 12px 0 0', overflow: 'hidden', marginTop: 4 }}>
                                     {[
                                         { label: 'Visitas', value: completedBookings.length.toString(), color: '#38bdf8' },
                                         { label: 'Total gastado', value: fmtMXN(totalSpent), color: '#4ade80' },
                                         { label: 'Pendiente', value: totalPending > 0 ? fmtMXN(totalPending) : '—', color: totalPending > 0 ? '#f97316' : 'rgba(255,255,255,0.3)' },
                                         { label: 'Saldo a favor', value: (detailClient.credit_balance || 0) > 0 ? fmtMXN(detailClient.credit_balance) : '—', color: (detailClient.credit_balance || 0) > 0 ? '#4ade80' : 'rgba(255,255,255,0.3)' },
                                     ].map(stat => (
-                                        <div key={stat.label} style={{ padding: '14px 12px', background: 'rgba(0,0,0,0.2)', textAlign: 'center' }}>
+                                        <div key={stat.label} style={{ padding: '14px 12px', background: 'var(--color-bg-elevated)', textAlign: 'center' }}>
                                             <div style={{ fontSize: '15px', fontWeight: 700, color: stat.color, lineHeight: 1 }}>{stat.value}</div>
-                                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{stat.label}</div>
+                                            <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{stat.label}</div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                             {detailLoading && (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: 'rgba(255,255,255,0.06)', borderRadius: '12px 12px 0 0', overflow: 'hidden' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, background: 'var(--color-glass-hover)', borderRadius: '12px 12px 0 0', overflow: 'hidden' }}>
                                     {[...Array(4)].map((_, i) => (
-                                        <div key={i} style={{ padding: '14px 12px', background: 'rgba(0,0,0,0.2)', textAlign: 'center', height: 52 }} />
+                                        <div key={i} style={{ padding: '14px 12px', background: 'var(--color-bg-elevated)', textAlign: 'center', height: 52 }} />
                                     ))}
                                 </div>
                             )}
                         </div>
 
                         {/* ── Tab bar ── */}
-                        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'var(--color-bg-secondary)', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', borderBottom: '1px solid var(--color-glass-border)', background: 'var(--color-bg-secondary)', flexShrink: 0 }}>
                             {tabs.map(t => (
                                 <button key={t.key}
                                     onClick={() => setDetailTab(t.key)}
@@ -693,7 +693,7 @@ export function ClientsPage() {
                             ) : !detailHistory ? null : detailTab === 'bookings' ? (
                                 /* ── Citas tab ── */
                                 detailHistory.bookings.length === 0 ? (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: 'rgba(255,255,255,0.3)', gap: 8 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--color-text-tertiary)', gap: 8 }}>
                                         <CalendarDays size={32} style={{ opacity: 0.3 }} />
                                         <span style={{ fontSize: '13px' }}>Sin citas registradas</span>
                                     </div>
@@ -748,17 +748,17 @@ export function ClientsPage() {
                                         <div key={b.id} style={{
                                             display: 'flex', alignItems: 'center', gap: 16,
                                             padding: '16px 28px',
-                                            borderBottom: i < detailHistory.bookings.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                            borderBottom: i < detailHistory.bookings.length - 1 ? '1px solid var(--color-glass-border)' : 'none',
                                             transition: 'background 0.15s',
                                             opacity: isDimmed ? 0.35 : 1,
                                         }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-glass)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = '')}
                                         >
                                             {/* Date block */}
                                             <div style={{ textAlign: 'center', minWidth: 42, flexShrink: 0 }}>
-                                                <div style={{ fontSize: '20px', fontWeight: 700, color: 'white', lineHeight: 1 }}>{d.getDate()}</div>
-                                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
+                                                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-text-primary)', lineHeight: 1 }}>{d.getDate()}</div>
+                                                <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase' }}>
                                                     {d.toLocaleDateString('es-MX', { month: 'short' })}
                                                 </div>
                                             </div>
@@ -766,12 +766,12 @@ export function ClientsPage() {
                                             <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
                                             {/* Info */}
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '14px', fontWeight: 500, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                                     {b.services.filter(Boolean).join(' + ') || '—'}
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                                                    <Clock size={11} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-                                                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
+                                                    <Clock size={11} style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />
+                                                    <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
                                                         {d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })} · {d.getFullYear()}
                                                     </span>
                                                 </div>
@@ -780,7 +780,7 @@ export function ClientsPage() {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                                                 {/* Amount — left of icon, regular weight */}
                                                 {b.total > 0 && (
-                                                    <span style={{ fontSize: '13px', fontWeight: 400, color: 'rgba(255,255,255,0.5)' }}>
+                                                    <span style={{ fontSize: '13px', fontWeight: 400, color: 'var(--color-text-secondary)' }}>
                                                         ${b.total.toLocaleString()}
                                                     </span>
                                                 )}
@@ -803,7 +803,7 @@ export function ClientsPage() {
                             ) : detailTab === 'invoices' ? (
                                 /* ── Comprobantes tab ── */
                                 detailHistory.invoices.length === 0 ? (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: 'rgba(255,255,255,0.3)', gap: 8 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--color-text-tertiary)', gap: 8 }}>
                                         <FileText size={32} style={{ opacity: 0.3 }} />
                                         <span style={{ fontSize: '13px' }}>Sin comprobantes</span>
                                     </div>
@@ -812,13 +812,13 @@ export function ClientsPage() {
                                     return (
                                         <div key={inv.id} style={{
                                             display: 'flex', alignItems: 'center', gap: 16, padding: '16px 28px',
-                                            borderBottom: i < detailHistory.invoices.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                            borderBottom: i < detailHistory.invoices.length - 1 ? '1px solid var(--color-glass-border)' : 'none',
                                             transition: 'background 0.15s',
                                             cursor: 'pointer',
                                         }}
                                             onClick={() => setSelectedInvoiceId(inv.id)}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-glass)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = '')}
                                         >
                                             {/* Icon */}
                                             <div style={{ width: 36, height: 36, borderRadius: 10, background: st.color + '1a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -826,16 +826,16 @@ export function ClientsPage() {
                                             </div>
                                             {/* Info */}
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', fontFamily: 'monospace' }}>
+                                                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', fontFamily: 'monospace' }}>
                                                     {inv.invoice_number || inv.id.slice(0, 8)}
                                                 </div>
-                                                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                                                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 2 }}>
                                                     {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 </div>
                                             </div>
                                             {/* Right */}
                                             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                                                <div style={{ fontSize: '15px', fontWeight: 700, color: 'white' }}>{fmtMXN(inv.total)}</div>
+                                                <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-text-primary)' }}>{fmtMXN(inv.total)}</div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginTop: 3 }}>
                                                     {inv.balance_due > 0 && (
                                                         <span style={{ fontSize: '11px', color: '#f97316' }}>Pendiente {fmtMXN(inv.balance_due)}</span>
@@ -851,7 +851,7 @@ export function ClientsPage() {
                             ) : (
                                 /* ── Pagos tab ── */
                                 detailHistory.payments.length === 0 ? (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: 'rgba(255,255,255,0.3)', gap: 8 }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--color-text-tertiary)', gap: 8 }}>
                                         <CreditCard size={32} style={{ opacity: 0.3 }} />
                                         <span style={{ fontSize: '13px' }}>Sin pagos registrados</span>
                                     </div>
@@ -861,11 +861,11 @@ export function ClientsPage() {
                                     return (
                                         <div key={pay.id} style={{
                                             display: 'flex', alignItems: 'center', gap: 16, padding: '16px 28px',
-                                            borderBottom: i < detailHistory.payments.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                            borderBottom: i < detailHistory.payments.length - 1 ? '1px solid var(--color-glass-border)' : 'none',
                                             transition: 'background 0.15s',
                                         }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-glass)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = '')}
                                         >
                                             {/* Icon */}
                                             <div style={{ width: 36, height: 36, borderRadius: 10, background: mColor + '1a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -874,7 +874,7 @@ export function ClientsPage() {
                                             {/* Info */}
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.4)', padding: '1px 7px', borderRadius: 4 }}>
+                                                    <span style={{ fontSize: '11px', fontFamily: 'monospace', background: 'var(--color-glass-hover)', color: 'var(--color-text-tertiary)', padding: '1px 7px', borderRadius: 4 }}>
                                                         #{pay.id.slice(0, 8).toUpperCase()}
                                                     </span>
                                                     {pay.method && (
@@ -883,7 +883,7 @@ export function ClientsPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>
+                                                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 4 }}>
                                                     {new Date(pay.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                     {pay.notes && <span style={{ marginLeft: 6, fontStyle: 'italic' }}>· {pay.notes}</span>}
                                                 </div>
@@ -900,9 +900,9 @@ export function ClientsPage() {
 
                         {/* Notes footer */}
                         {detailClient.notes && (
-                            <div style={{ padding: '12px 28px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
-                                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nota: </span>
-                                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>{detailClient.notes}</span>
+                            <div style={{ padding: '12px 28px', borderTop: '1px solid var(--color-glass-border)', background: 'rgba(255,255,255,0.02)', flexShrink: 0 }}>
+                                <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Nota: </span>
+                                <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>{detailClient.notes}</span>
                             </div>
                         )}
                     </div>

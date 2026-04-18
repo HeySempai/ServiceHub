@@ -101,7 +101,7 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                 position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 1101,
                 width: 480, maxWidth: '95vw',
                 background: 'var(--color-bg-secondary)',
-                borderLeft: '1px solid rgba(255,255,255,0.08)',
+                borderLeft: '1px solid var(--color-glass-border)',
                 display: 'flex', flexDirection: 'column',
                 boxShadow: '-16px 0 48px rgba(0,0,0,0.5)',
                 overflowY: 'auto',
@@ -115,7 +115,7 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                         {/* Header */}
                         <div style={{
                             padding: '28px 28px 20px',
-                            borderBottom: '1px solid rgba(255,255,255,0.07)',
+                            borderBottom: '1px solid var(--color-glass-border)',
                             display: 'flex', alignItems: 'flex-start', gap: 16,
                         }}>
                             <div style={{
@@ -126,10 +126,10 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                                 <FileText size={20} style={{ color: st!.color }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '18px', fontWeight: 700, color: 'white', fontFamily: 'monospace' }}>
+                                <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'monospace' }}>
                                     {inv.invoice_number || inv.id.slice(0, 8)}
                                 </div>
-                                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>
+                                <div style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', marginTop: 3 }}>
                                     {inv.clients ? `${inv.clients.first_name} ${inv.clients.last_name}` : '—'}
                                     {' · '}
                                     {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -148,7 +148,7 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                                         background: 'rgba(255,255,255,0.06)', border: 'none',
                                         borderRadius: 8, width: 32, height: 32,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+                                        color: 'var(--color-text-secondary)', cursor: 'pointer',
                                     }}
                                 >
                                     <X size={16} />
@@ -158,13 +158,13 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
 
                         {/* Lines */}
                         <div style={{ padding: '24px 28px' }}>
-                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
                                 Conceptos
                             </div>
                             {lines.length === 0 ? (
-                                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>Sin conceptos</div>
+                                <div style={{ fontSize: '13px', color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>Sin conceptos</div>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--color-glass-border)' }}>
                                     {lines.map((line, i) => (
                                         <div key={line.id} style={{
                                             display: 'flex', alignItems: 'center', gap: 12,
@@ -172,13 +172,13 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                                             background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
                                         }}>
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '13px', fontWeight: 500, color: 'white' }}>{line.description}</div>
-                                                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                                                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>{line.description}</div>
+                                                <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginTop: 2 }}>
                                                     {line.quantity} × {fmt(line.unit_price)}
                                                     {line.tax_rate > 0 && ` · IVA ${Math.round(line.tax_rate * 100)}%`}
                                                 </div>
                                             </div>
-                                            <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', flexShrink: 0 }}>
+                                            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', flexShrink: 0 }}>
                                                 {fmt(line.total)}
                                             </div>
                                         </div>
@@ -187,17 +187,17 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                             )}
 
                             {/* Totals */}
-                            <div style={{ marginTop: 16, padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>
+                            <div style={{ marginTop: 16, padding: '16px', background: 'var(--color-glass)', borderRadius: 10, border: '1px solid var(--color-glass-border)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: 8 }}>
                                     <span>Subtotal</span><span>{fmt(inv.subtotal)}</span>
                                 </div>
                                 {inv.tax_total > 0 && (
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: 8 }}>
                                         <span>IVA</span><span>{fmt(inv.tax_total)}</span>
                                     </div>
                                 )}
                                 <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 10 }} />
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 700, color: 'white' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
                                     <span>Total</span><span>{fmt(inv.total)}</span>
                                 </div>
                                 {inv.amount_paid > 0 && (
@@ -214,17 +214,17 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
 
                             {/* Notes */}
                             {inv.notes && (
-                                <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
-                                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Notas</div>
-                                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>{inv.notes}</div>
+                                <div style={{ marginTop: 16, padding: '12px 16px', background: 'var(--color-glass)', borderRadius: 10, border: '1px solid var(--color-glass-border)' }}>
+                                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Notas</div>
+                                    <div style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>{inv.notes}</div>
                                 </div>
                             )}
 
                             {/* RFC */}
                             {inv.client_rfc && (
-                                <div style={{ marginTop: 10, padding: '10px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>RFC</span>
-                                    <span style={{ fontSize: '13px', fontWeight: 500, color: 'white', fontFamily: 'monospace' }}>{inv.client_rfc}</span>
+                                <div style={{ marginTop: 10, padding: '10px 16px', background: 'var(--color-glass)', borderRadius: 10, border: '1px solid var(--color-glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>RFC</span>
+                                    <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)', fontFamily: 'monospace' }}>{inv.client_rfc}</span>
                                 </div>
                             )}
                         </div>
@@ -232,10 +232,10 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                         {/* Payments */}
                         {payments.length > 0 && (
                             <div style={{ padding: '0 28px 28px' }}>
-                                <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
+                                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
                                     Pagos registrados
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 1, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--color-glass-border)' }}>
                                     {payments.map((pay, i) => (
                                         <div key={pay.id} style={{
                                             display: 'flex', alignItems: 'center', gap: 12,
@@ -246,10 +246,10 @@ export function InvoiceDetailDrawer({ invoiceId, onClose }: Props) {
                                                 <CreditCard size={14} style={{ color: '#22c55e' }} />
                                             </div>
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <div style={{ fontSize: '13px', fontWeight: 500, color: 'white' }}>
+                                                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
                                                     {pay.payment_methods?.name || 'Pago'}
                                                 </div>
-                                                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
+                                                <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginTop: 2 }}>
                                                     {new Date(pay.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                     {pay.notes && ` · ${pay.notes}`}
                                                 </div>

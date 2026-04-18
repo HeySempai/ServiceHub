@@ -48,10 +48,10 @@ type ViewMode = 'calendar' | 'list'
 type CalendarViewType = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay'
 
 const STATUS_CONFIG: Record<string, { bg: string, text: string, label: string, color: string }> = {
-    'scheduled': { bg: 'rgba(56, 189, 248, 0.2)', text: '#38bdf8', label: 'Programado', color: '#0ea5e9' },
-    'completed': { bg: 'rgba(34, 197, 94, 0.2)', text: '#4ade80', label: 'Completado', color: '#22c55e' },
-    'no_show': { bg: 'rgba(239, 68, 68, 0.2)', text: '#f87171', label: 'No Asistió', color: '#ef4444' },
-    'cancelled': { bg: 'rgba(148, 163, 184, 0.2)', text: '#94a3b8', label: 'Cancelado', color: '#64748b' },
+    'scheduled': { bg: 'rgba(56, 189, 248, 0.15)', text: '#0284c7', label: 'Programado', color: '#0ea5e9' },
+    'completed': { bg: 'rgba(34, 197, 94, 0.15)', text: '#15803d', label: 'Completado', color: '#22c55e' },
+    'no_show': { bg: 'rgba(239, 68, 68, 0.15)', text: '#dc2626', label: 'No Asistió', color: '#ef4444' },
+    'cancelled': { bg: 'rgba(148, 163, 184, 0.15)', text: '#475569', label: 'Cancelado', color: '#64748b' },
 }
 
 export function BookingsPage() {
@@ -595,14 +595,14 @@ export function BookingsPage() {
                             onClick={() => setViewMode('list')}
                             title="Vista Lista"
                         >
-                            <ListIcon size={16} color="#ffffff" />
+                            <ListIcon size={16} style={{ color: viewMode === 'list' ? 'white' : 'var(--color-text-secondary)' }} />
                         </button>
                         <button
                             style={{ background: viewMode === 'calendar' ? 'var(--color-accent)' : 'transparent', border: 'none', padding: '4px 16px', height: '28px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s ease' }}
                             onClick={() => setViewMode('calendar')}
                             title="Vista Calendario"
                         >
-                            <CalendarIcon size={16} color="#ffffff" />
+                            <CalendarIcon size={16} style={{ color: viewMode === 'calendar' ? 'white' : 'var(--color-text-secondary)' }} />
                         </button>
                     </div>
 
