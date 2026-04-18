@@ -163,7 +163,7 @@ export function SettingsPage() {
         setUploading(true)
 
         const ext = file.name.split('.').pop()
-        const filePath = `${orgMember.org_id}/logo.${ext}`
+        const filePath = `${orgMember.org_id}/logo_${Date.now()}.${ext}`
 
         const { error: uploadError } = await supabase.storage
             .from('logos')
@@ -174,9 +174,11 @@ export function SettingsPage() {
             await supabase.from('organizations')
                 .update({ logo_url: publicUrl })
                 .eq('id', orgMember.org_id)
-            setLogoUrl(publicUrl + '?t=' + Date.now())
+            setLogoUrl(publicUrl)
         }
         setUploading(false)
+        // Reset input so same file can be re-selected
+        e.target.value = ''
     }
 
     const refreshTeam = async () => {
