@@ -62,8 +62,19 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({ startDate, endDa
     };
 
     const isInRange = (day: Date) => {
-        if (!selStart || !selEnd) return false;
-        return isWithinInterval(day, { start: selStart, end: selEnd });
+        // Confirmed range (both endpoints selected)
+        if (selStart && selEnd) {
+            return isWithinInterval(day, { start: selStart, end: selEnd }) && !isSameDay(day, selStart) && !isSameDay(day, selEnd);
+        }
+        return false;
+    };
+
+    const isHoverRange = (day: Date) => {
+        // Preview range while hovering (only start selected, no end yet)
+        if (!selStart || selEnd || !hoverDate) return false;
+        const rangeStart = isBefore(hoverDate, selStart) ? hoverDate : selStart;
+        const rangeEnd = isBefore(hoverDate, selStart) ? selStart : hoverDate;
+        return isWithinInterval(day, { start: startOfDay(rangeStart), end: endOfDay(rangeEnd) }) && !isSameDay(day, selStart);
     };
 
     return (
@@ -85,18 +96,23 @@ export const CalendarPicker: React.FC<CalendarPickerProps> = ({ startDate, endDa
                     <div key={i} className="calendar-picker-weekday">{d}</div>
                 ))}
                 {days.map((day, i) => {
-                    const isSelected = (selStart && isSameDay(day, selStart)) || (selEnd && isSameDay(day, selEnd));
+                    const isStart = selStart && isSameDay(day, selStart);
+                    const isEnd = selEnd && isSameDay(day, selEnd);
+                    const isSelected = isStart || isEnd;
                     const isToday = isSameDay(day, new Date());
                     const isCurrentMonth = isSameMonth(day, viewDate);
+                    const inRange = isInRange(day);
+                    const inHoverRange = isHoverRange(day);
 
                     return (
                         <div
                             key={i}
-                            className={`calendar-picker-day 
-                                ${!isCurrentMonth ? 'outside' : ''} 
-                                ${isSelected ? 'selected' : ''} 
-                                ${isToday ? 'today' : ''} 
-                                ${isInRange(day) ? 'in-range' : ''}
+                            className={`calendar-picker-day
+                                ${!isCurrentMonth ? 'outside' : ''}
+                                ${isSelected ? 'selected' : ''}
+                                ${isToday && !isSelected ? 'today' : ''}
+                                ${inRange ? 'in-range' : ''}
+                                ${inHoverRange ? 'hover-range' : ''}
                             `}
                             onClick={() => handleDayClick(day)}
                             onMouseEnter={() => setHoverDate(day)}

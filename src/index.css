@@ -1610,7 +1610,7 @@ input[type="number"] {
 }
 
 .calendar-picker-day:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-glass-hover);
 }
 
 .calendar-picker-day.outside {
@@ -1627,17 +1627,20 @@ input[type="number"] {
   background: var(--color-accent) !important;
   color: white !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3) !important;
+  font-weight: 600;
 }
 
 .calendar-picker-day.in-range {
-  background: rgba(99, 102, 241, 0.12) !important;
+  background: var(--color-accent-soft) !important;
   border-radius: 4px !important;
+  color: var(--color-accent);
 }
 
-.calendar-picker-day.selected+.calendar-picker-day.in-range {
-  border-top-left-radius: 4px !important;
-  border-bottom-left-radius: 4px !important;
+.calendar-picker-day.hover-range {
+  background: var(--color-accent-soft) !important;
+  border-radius: 4px !important;
+  color: var(--color-accent);
 }
 
 /* Time Gutter (Hours column) */
