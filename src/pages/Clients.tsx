@@ -354,11 +354,11 @@ export function ClientsPage() {
                     <button className="btn btn-secondary" onClick={exportToCSV} title="Exportar CSV" style={{ borderRadius: '16px', height: '36px', gap: '8px', border: 'none' }}>
                         <Download size={16} /> Exportar
                     </button>
-                    <div style={{ flex: 1 }} />
-                    <button id="btn-new-client" className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }} onClick={() => setShowModal(true)}>
-                        <Plus size={15} /> Nuevo cliente
-                    </button>
                 </div>
+                <div style={{ flex: 1 }} />
+                <button id="btn-new-client" className="btn btn-glass-primary" style={{ borderRadius: '16px', height: '36px', border: 'none', padding: '0 20px' }} onClick={() => setShowModal(true)}>
+                    <Plus size={15} /> Nuevo cliente
+                </button>
             </div>
 
             {loading ? (
