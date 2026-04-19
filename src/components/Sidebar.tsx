@@ -61,7 +61,7 @@ export function Sidebar() {
                     <img
                         src={logoUrl}
                         alt={orgName}
-                        style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                        style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                     />
                 ) : (
                     <div className="sidebar-logo">S</div>
