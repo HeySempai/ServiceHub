@@ -309,10 +309,10 @@ button {
 
 .sidebar-nav {
   flex: 1;
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: 2px;
   overflow-y: auto;
 }
 
@@ -321,7 +321,7 @@ button {
   color: var(--color-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  padding: var(--space-md) var(--space-md) var(--space-sm);
+  padding: var(--space-sm) var(--space-md) 2px;
   font-weight: 500;
 }
 
@@ -329,7 +329,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
+  padding: 6px var(--space-md);
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   cursor: pointer;

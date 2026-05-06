@@ -332,8 +332,8 @@ export function InvoicesPage() {
             ) : filteredInvoices.length === 0 ? (
                 <div className="card"><div className="empty-state"><FileText /><h3>Sin comprobantes aún</h3><p>Crea un nuevo comprobante para comenzar.</p></div></div>
             ) : (
-                <div className="data-table-wrapper">
-                    <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="data-table-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table className="data-table" style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse' }}>
                         <thead style={{ borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
                             <tr>
                                 <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Folio</th>

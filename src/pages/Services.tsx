@@ -364,7 +364,7 @@ function ServiceCard({ service: s, menuOpenId, setMenuOpenId, menuRef, onEdit, o
                     {isMenuOpen && (
                         <div className="dropdown" style={{
                             position: 'absolute', top: 32, right: 0, zIndex: 50,
-                            minWidth: 150, background: 'var(--color-surface)',
+                            minWidth: 150, background: 'var(--color-bg-secondary)',
                             border: '1px solid var(--color-glass-border)',
                             borderRadius: 'var(--radius-md)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                             overflow: 'hidden',

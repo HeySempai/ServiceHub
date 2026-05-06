@@ -31,6 +31,7 @@ export function Sidebar() {
     const { user, orgMember, signOut } = useAuth()
     const navigate = useNavigate()
     const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
     // Sync CSS variable on mount so main-content margin matches sidebar state
     useEffect(() => {
@@ -135,7 +136,7 @@ export function Sidebar() {
             </nav>
 
             <div className="sidebar-footer">
-                <div className="user-info" onClick={handleSignOut} title="Cerrar sesión" style={collapsed ? { justifyContent: 'center', padding: '12px' } : undefined}>
+                <div className="user-info" onClick={() => setShowLogoutConfirm(true)} title="Cerrar sesión" style={collapsed ? { justifyContent: 'center', padding: '12px' } : undefined}>
                     <div className="user-avatar">{initials}</div>
                     {!collapsed && (
                         <>
@@ -148,6 +149,25 @@ export function Sidebar() {
                     )}
                 </div>
             </div>
+
+            {showLogoutConfirm && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowLogoutConfirm(false)}>
+                    <div style={{ background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-lg)', padding: '24px', maxWidth: 340, width: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', border: '1px solid var(--color-glass-border)' }} onClick={e => e.stopPropagation()}>
+                        <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: 'var(--color-text-primary)' }}>Cerrar sesión</h3>
+                        <p style={{ margin: '0 0 20px', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+                            ¿Estás seguro que deseas cerrar sesión?
+                        </p>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-secondary" style={{ borderRadius: '12px', padding: '8px 16px', border: 'none' }} onClick={() => setShowLogoutConfirm(false)}>
+                                Cancelar
+                            </button>
+                            <button className="btn" style={{ borderRadius: '12px', padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none' }} onClick={handleSignOut}>
+                                Cerrar sesión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </aside>
     )
 }
