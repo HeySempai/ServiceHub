@@ -89,7 +89,7 @@ export function InvoicesPage() {
     // Invoice form
     const [form, setForm] = useState({
         client_id: '',
-        issued_at: new Date().toISOString().split('T')[0],
+        issued_at: new Date().toLocaleDateString('en-CA'),
         notes: '',
         requires_cfdi: false,
         client_rfc: '',
@@ -191,7 +191,7 @@ export function InvoicesPage() {
     const invoiceTotal = lines.reduce((s, l) => s + l.total, 0)
 
     const openCreateModal = () => {
-        setForm({ client_id: '', issued_at: new Date().toISOString().split('T')[0], notes: '', requires_cfdi: false, client_rfc: '' })
+        setForm({ client_id: '', issued_at: new Date().toLocaleDateString('en-CA'), notes: '', requires_cfdi: false, client_rfc: '' })
         setLines([emptyLine()])
         setShowModal(true)
     }
@@ -252,7 +252,7 @@ export function InvoicesPage() {
             p_org_id:    orgId,
             p_amount:    payInvoice.balance_due,
             p_method_id: payMethodId || null,
-            p_date:      new Date().toISOString().split('T')[0],
+            p_date:      new Date().toLocaleDateString('en-CA'),
             p_notes:     `Pago completo - Comprobante ${payInvoice.invoice_number || ''}`,
         })
         if (error) console.error('mark_as_paid error:', error)

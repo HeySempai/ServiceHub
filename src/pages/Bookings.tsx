@@ -318,7 +318,7 @@ export function BookingsPage() {
         setForm({
             client_id: '',
             provider_id: orgMember?.id || '',
-            date: dateStr || new Date().toISOString().split('T')[0],
+            date: dateStr || new Date().toLocaleDateString('en-CA'),
             time: timeStr || '09:00',
             notes: '',
             status: 'scheduled'
@@ -1531,12 +1531,12 @@ export function BookingsPage() {
                                         <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: payMode === 'balance' && payTarget.clientBalance < payTarget.invoice.balance_due ? '#fbbf24' : '#10b981', fontWeight: 600, marginBottom: 4 }}>
                                             {payMode === 'balance' && payTarget.clientBalance < payTarget.invoice.balance_due ? '⚡ Saldo parcial — ABONAR' : 'Saldo a favor disponible'}
                                         </div>
-                                        <div style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>${payTarget.clientBalance.toLocaleString()}</div>
+                                        <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-text-primary)' }}>${payTarget.clientBalance.toLocaleString()}</div>
                                         {payMode === 'balance' && (
                                             <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 4 }}>
                                                 {payTarget.clientBalance >= payTarget.invoice.balance_due
-                                                    ? <>Se aplicarán <strong style={{ color: 'white' }}>${payTarget.invoice.balance_due.toLocaleString()}</strong> — cita <strong style={{ color: '#10b981' }}>LIQUIDADA</strong> ✓</>
-                                                    : <>Se abonarán <strong style={{ color: 'white' }}>${payTarget.clientBalance.toLocaleString()}</strong> — quedará pendiente <strong style={{ color: '#f87171' }}>${(payTarget.invoice.balance_due - payTarget.clientBalance).toLocaleString()}</strong></>
+                                                    ? <>Se aplicarán <strong style={{ color: 'var(--color-text-primary)' }}>${payTarget.invoice.balance_due.toLocaleString()}</strong> — cita <strong style={{ color: '#10b981' }}>LIQUIDADA</strong> ✓</>
+                                                    : <>Se abonarán <strong style={{ color: 'var(--color-text-primary)' }}>${payTarget.clientBalance.toLocaleString()}</strong> — quedará pendiente <strong style={{ color: '#f87171' }}>${(payTarget.invoice.balance_due - payTarget.clientBalance).toLocaleString()}</strong></>
                                                 }
                                             </div>
                                         )}

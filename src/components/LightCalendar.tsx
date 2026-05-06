@@ -48,7 +48,7 @@ function getWeekDays(date: Date): Date[] {
 }
 
 function toDateStr(d: Date): string {
-    return d.toISOString().split('T')[0]
+    return d.toLocaleDateString('en-CA')
 }
 
 function minToTime(min: number): string {
@@ -431,7 +431,7 @@ function EventBlock({ booking: b, onClick, left, right, isDragging, dragTop, onT
 
 /* ─── Now Indicator ─── */
 function NowIndicator({ dateStr }: { dateStr: string }) {
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = new Date().toLocaleDateString('en-CA')
     if (dateStr !== todayStr) return null
     const now = new Date()
     const nowMin = (now.getHours() - 8) * 60 + now.getMinutes()

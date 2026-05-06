@@ -104,7 +104,7 @@ export function ClientsPage() {
             p_org_id:    orgId,
             p_amount:    payInvoice.balance_due,
             p_method_id: payMethodId || null,
-            p_date:      new Date().toISOString().split('T')[0],
+            p_date:      new Date().toLocaleDateString('en-CA'),
             p_notes:     `Pago completo - Comprobante ${payInvoice.invoice_number || ''}`,
         })
         if (error) console.error('mark_as_paid error:', error)
@@ -279,7 +279,7 @@ export function ClientsPage() {
         const url = URL.createObjectURL(blob)
         const link = document.createElement("a")
         link.setAttribute("href", url)
-        link.setAttribute("download", `clientes_${new Date().toISOString().split('T')[0]}.csv`)
+        link.setAttribute("download", `clientes_${new Date().toLocaleDateString('en-CA')}.csv`)
         link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()

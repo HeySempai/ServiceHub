@@ -50,12 +50,12 @@ export default function BookingListView({
       if (!showCompleted && b.status === 'completed') return false
 
       if (startDate) {
-        const bookingDate = new Date(b.start_at).toISOString().split('T')[0]
+        const bookingDate = new Date(b.start_at).toLocaleDateString('en-CA')
         if (bookingDate < startDate) return false
       }
 
       if (endDate) {
-        const bookingDate = new Date(b.start_at).toISOString().split('T')[0]
+        const bookingDate = new Date(b.start_at).toLocaleDateString('en-CA')
         if (bookingDate > endDate) return false
       }
 

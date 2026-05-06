@@ -44,7 +44,7 @@ export function ExpensesPage() {
 
     const [form, setForm] = useState({
         category_id: '',
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toLocaleDateString('en-CA'),
         period: currentMonth(),
         description: '',
         vendor: '',
@@ -120,7 +120,7 @@ export function ExpensesPage() {
 
     const openCreate = () => {
         setEditingExpense(null)
-        setForm({ category_id: categories[0]?.id || '', date: new Date().toISOString().split('T')[0], period: currentMonth(), description: '', vendor: '', total: '', payment_method: 'Efectivo', has_receipt: false })
+        setForm({ category_id: categories[0]?.id || '', date: new Date().toLocaleDateString('en-CA'), period: currentMonth(), description: '', vendor: '', total: '', payment_method: 'Efectivo', has_receipt: false })
         setShowModal(true)
     }
 

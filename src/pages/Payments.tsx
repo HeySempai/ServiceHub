@@ -80,7 +80,7 @@ export function PaymentsPage() {
     // Pay modal
     const [showPayModal, setShowPayModal]       = useState(false)
     const [payClientId, setPayClientId]         = useState('')
-    const [payForm, setPayForm]                 = useState({ amount: '', method_id: '', notes: '', date: new Date().toISOString().split('T')[0] })
+    const [payForm, setPayForm]                 = useState({ amount: '', method_id: '', notes: '', date: new Date().toLocaleDateString('en-CA') })
     const [showPayDatePicker, setShowPayDatePicker] = useState(false)
     const payDateRef = useRef<HTMLDivElement>(null)
 
@@ -180,7 +180,7 @@ export function PaymentsPage() {
             amount: clientId ? String(Math.round(debt * 100) / 100 || '') : '',
             method_id: paymentMethods[0]?.id || '',
             notes: '',
-            date: new Date().toISOString().split('T')[0],
+            date: new Date().toLocaleDateString('en-CA'),
         })
         setShowPayModal(true)
     }

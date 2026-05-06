@@ -107,7 +107,7 @@ export function ClientDetailDrawer({ clientId, orgId, onClose, onEdit }: Props) 
         setPayingInvoice(true)
         await supabase.rpc('register_payment_full', {
             p_client_id: payInvoice.client_id, p_org_id: orgId, p_amount: payInvoice.balance_due,
-            p_method_id: payMethodId || null, p_date: new Date().toISOString().split('T')[0],
+            p_method_id: payMethodId || null, p_date: new Date().toLocaleDateString('en-CA'),
             p_notes: `Pago completo - Comprobante ${payInvoice.invoice_number || ''}`,
         })
         setPayInvoice(null); setPayMethodId(''); setPayingInvoice(false)

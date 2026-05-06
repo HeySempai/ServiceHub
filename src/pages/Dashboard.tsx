@@ -40,13 +40,15 @@ export function DashboardPage() {
         const orgId = orgMember.org_id
 
         const fetchData = async () => {
-            const today = new Date().toISOString().split('T')[0]
-            const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+            const today = new Date().toLocaleDateString('en-CA')
+            const dayStart = new Date(today + 'T00:00:00').toISOString()
+            const dayEnd = new Date(today + 'T23:59:59').toISOString()
+            const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toLocaleDateString('en-CA')
 
             const [clientsRes, bookingsTodayRes, revenueRes, pendingRes, recentRes] = await Promise.all([
                 supabase.from('clients').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('active', true),
-                supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('org_id', orgId).gte('start_at', today + 'T00:00:00').lte('start_at', today + 'T23:59:59'),
-                supabase.from('payments').select('amount').eq('org_id', orgId).gte('date', monthStart.split('T')[0]),
+                supabase.from('bookings').select('id', { count: 'exact', head: true }).eq('org_id', orgId).gte('start_at', dayStart).lte('start_at', dayEnd),
+                supabase.from('payments').select('amount').eq('org_id', orgId).gte('date', monthStart),
                 supabase.from('invoices').select('id, balance_due, clients(first_name, last_name)').eq('org_id', orgId).in('status', ['open', 'partial']).order('balance_due', { ascending: false }),
                 supabase.from('bookings').select('id, start_at, status, clients(first_name, last_name), services(name), org_members(display_name)')
                     .eq('org_id', orgId).order('start_at', { ascending: false }).limit(8),

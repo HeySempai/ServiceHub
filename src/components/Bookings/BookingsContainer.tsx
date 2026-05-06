@@ -207,7 +207,7 @@ export default function BookingsContainer() {
     setForm({
       client_id: '',
       provider_id: orgMember?.id || '',
-      date: dateStr || new Date().toISOString().split('T')[0],
+      date: dateStr || new Date().toLocaleDateString('en-CA'),
       time: timeStr || '09:00',
       notes: '',
       status: 'scheduled',
