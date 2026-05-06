@@ -38,6 +38,7 @@ interface Booking {
 }
 
 interface ServiceOption { id: string; label: string; price: number; duration_min: number; color: string | null }
+interface SelectedService extends ServiceOption { qty: number }
 
 interface SelectOption { id: string; label: string; color?: string | null }
 
@@ -109,7 +110,7 @@ export function BookingsPage() {
     const [services, setServices] = useState<ServiceOption[]>([])
     const [providers, setProviders] = useState<SelectOption[]>([])
     const [paymentMethods, setPaymentMethods] = useState<SelectOption[]>([])
-    const [selectedServices, setSelectedServices] = useState<ServiceOption[]>([])
+    const [selectedServices, setSelectedServices] = useState<SelectedService[]>([])
     const [clientSearch, setClientSearch] = useState('')
     const [showClientDropdown, setShowClientDropdown] = useState(false)
 
@@ -341,22 +342,23 @@ export function BookingsPage() {
             const sorted = [...b.booking_services].sort((a, x) => a.sort_order - x.sort_order)
             setSelectedServices(sorted.map(bs => {
                 const found = services.find(s => s.id === bs.service_id)
-                return found || {
+                return { ...(found || {
                     id: bs.service_id,
                     label: bs.services?.name || 'Servicio',
                     price: Number(bs.price_snapshot),
                     duration_min: Number(bs.duration_min_snapshot),
                     color: bs.services?.color || null,
-                }
+                }), qty: 1 }
             }))
         } else if (b.service_id) {
             const found = services.find(s => s.id === b.service_id)
-            setSelectedServices(found ? [found] : [{
+            setSelectedServices(found ? [{ ...found, qty: 1 }] : [{
                 id: b.service_id,
                 label: b.services?.name || 'Servicio',
                 price: b.services?.price || 0,
                 duration_min: b.services?.duration_min || 30,
                 color: b.services?.color || null,
+                qty: 1,
             }])
         } else {
             setSelectedServices([])
@@ -427,9 +429,9 @@ export function BookingsPage() {
             p_start_at:    startAt.toISOString(),
             p_status:      form.status,
             p_notes:       form.notes || null,
-            p_service_ids: selectedServices.map(s => s.id),
-            p_prices:      selectedServices.map(s => s.price),
-            p_durations:   selectedServices.map(s => s.duration_min),
+            p_service_ids: selectedServices.flatMap(s => Array(s.qty).fill(s.id)),
+            p_prices:      selectedServices.flatMap(s => Array(s.qty).fill(s.price)),
+            p_durations:   selectedServices.flatMap(s => Array(s.qty).fill(s.duration_min)),
         })
 
         if (error) console.error('save_booking error:', error)
@@ -1263,7 +1265,7 @@ export function BookingsPage() {
             {
                 showModal && (
                     <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                        <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
                             <div className="modal-header">
                                 <h3 className="modal-title">{editingId ? 'Editar Cita' : 'Nueva Cita'}</h3>
                                 <button className="modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
@@ -1320,58 +1322,50 @@ export function BookingsPage() {
                                         </div>
                                     </div>
                                     <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
-                                        <label className="form-label">Servicios</label>
-                                        {/* Selected services chips */}
-                                        {selectedServices.length > 0 && (
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                                                {selectedServices.map((s, i) => (
-                                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: (s.color || 'var(--color-accent)') + '18', border: `1px solid ${s.color || 'var(--color-accent)'}40`, borderRadius: 10, padding: '8px 12px', fontSize: '14px' }}>
-                                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || 'var(--color-accent)', flexShrink: 0 }} />
-                                                        <span style={{ fontWeight: 500 }}>{s.label}</span>
-                                                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}>${s.price.toLocaleString()}</span>
-                                                        <button type="button" onClick={() => setSelectedServices(prev => prev.filter((_, j) => j !== i))} style={{ background: 'var(--color-glass-hover)', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', borderRadius: '50%', width: 22, height: 22, marginLeft: 2, flexShrink: 0 }}>
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {/* Add service buttons */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 160, overflowY: 'auto', border: '1px solid var(--color-glass-border)', borderRadius: 8, padding: 4 }}>
-                                            {services.filter(s => !selectedServices.some(ss => ss.id === s.id)).map(s => (
-                                                <button
-                                                    key={s.id}
-                                                    type="button"
-                                                    onClick={() => setSelectedServices(prev => [...prev, s])}
-                                                    style={{
-                                                        display: 'flex', alignItems: 'center', gap: 8,
-                                                        padding: '8px 10px', borderRadius: 6,
-                                                        border: 'none', background: 'transparent',
-                                                        cursor: 'pointer', textAlign: 'left', width: '100%',
-                                                    }}
-                                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-glass-hover)')}
-                                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                                                >
-                                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || 'var(--color-accent)', flexShrink: 0 }} />
-                                                    <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>{s.label}</span>
-                                                    <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>${s.price.toLocaleString()}</span>
-                                                </button>
-                                            ))}
-                                            {services.filter(s => !selectedServices.some(ss => ss.id === s.id)).length === 0 && (
-                                                <div style={{ padding: '8px 10px', fontSize: '13px', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>Todos los servicios agregados</div>
-                                            )}
+                                        <label className="form-label">Servicios y Productos</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 6 }}>
+                                            {services.map(s => {
+                                                const sel = selectedServices.find(ss => ss.id === s.id)
+                                                const isSelected = !!sel
+                                                return (
+                                                    <button
+                                                        key={s.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (!isSelected) {
+                                                                setSelectedServices(prev => [...prev, { ...s, qty: 1 }])
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                                            gap: 4, padding: '10px 6px', borderRadius: 10, cursor: 'pointer',
+                                                            border: isSelected ? `2px solid ${s.color || 'var(--color-accent)'}` : '1px solid var(--color-glass-border)',
+                                                            background: isSelected ? (s.color || 'var(--color-accent)') + '18' : 'var(--color-bg-secondary)',
+                                                            transition: 'all 0.15s ease', position: 'relative',
+                                                        }}
+                                                    >
+                                                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: s.color || 'var(--color-accent)' }} />
+                                                        <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-primary)', textAlign: 'center', lineHeight: 1.2 }}>{s.label}</span>
+                                                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>${s.price.toLocaleString()}</span>
+                                                        {isSelected && (
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }} onClick={e => e.stopPropagation()}>
+                                                                <button type="button" onClick={() => {
+                                                                    if (sel!.qty <= 1) setSelectedServices(prev => prev.filter(ss => ss.id !== s.id))
+                                                                    else setSelectedServices(prev => prev.map(ss => ss.id === s.id ? { ...ss, qty: ss.qty - 1 } : ss))
+                                                                }} style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--color-glass-border)', background: 'var(--color-bg-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>−</button>
+                                                                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', minWidth: 16, textAlign: 'center' }}>{sel!.qty}</span>
+                                                                <button type="button" onClick={() => setSelectedServices(prev => prev.map(ss => ss.id === s.id ? { ...ss, qty: ss.qty + 1 } : ss))}
+                                                                    style={{ width: 24, height: 24, borderRadius: '50%', border: 'none', background: s.color || 'var(--color-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600, color: 'white' }}>+</button>
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                )
+                                            })}
                                         </div>
-                                        {/* Total summary */}
                                         {selectedServices.length > 0 && (
-                                            <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-                                                <span>Total: <strong style={{ color: 'var(--color-text-primary)' }}>${selectedServices.reduce((s, x) => s + x.price, 0).toLocaleString()}</strong></span>
-                                                <span>Duración: <strong style={{ color: 'var(--color-text-primary)' }}>{selectedServices.reduce((s, x) => s + x.duration_min, 0)} min</strong></span>
+                                            <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: '13px', color: 'var(--color-text-tertiary)', padding: '8px 0', borderTop: '1px solid var(--color-glass-border)' }}>
+                                                <span>Total: <strong style={{ color: 'var(--color-text-primary)', fontSize: '15px' }}>${selectedServices.reduce((s, x) => s + x.price * x.qty, 0).toLocaleString()}</strong></span>
                                             </div>
-                                        )}
-                                        {selectedServices.length === 0 && (
-                                            <p style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginTop: 6, marginBottom: 0 }}>
-                                                Agrega al menos un servicio para guardar la cita.
-                                            </p>
                                         )}
                                     </div>
                                     <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>

@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 
 interface Booking {
@@ -237,17 +237,29 @@ function MultiColumnDayView({ bookings, dateStr, providers, onEventClick, onSlot
         }, 400)
     }, [yToMin])
 
-    const handleTouchMove = useCallback((e: React.TouchEvent) => {
-        if (longPressTimer.current && !dragging) {
-            const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
-            if (dy > 10) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
+    // Register touchmove with { passive: false } to allow preventDefault on Safari
+    const draggingRef = useRef(dragging)
+    draggingRef.current = dragging
+
+    useEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        const handler = (e: TouchEvent) => {
+            if (longPressTimer.current && !draggingRef.current) {
+                const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
+                if (dy > 10) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
+            }
+            if (!draggingRef.current) return
+            e.preventDefault()
+            e.stopPropagation()
+            const rect = el.getBoundingClientRect()
+            const touchMin = ((e.touches[0].clientY - rect.top + el.scrollTop) / HOUR_HEIGHT) * 60
+            const newTop = snapToGrid(touchMin - draggingRef.current.offsetMin)
+            setDragging(prev => prev ? { ...prev, currentTop: newTop } : null)
         }
-        if (!dragging) return
-        e.preventDefault()
-        const touchMin = yToMin(e.touches[0].clientY)
-        const newTop = snapToGrid(touchMin - dragging.offsetMin)
-        setDragging(prev => prev ? { ...prev, currentTop: newTop } : null)
-    }, [dragging, yToMin])
+        el.addEventListener('touchmove', handler, { passive: false })
+        return () => el.removeEventListener('touchmove', handler)
+    }, [])
 
     const handleTouchEnd = useCallback(() => {
         if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
@@ -297,7 +309,6 @@ function MultiColumnDayView({ bookings, dateStr, providers, onEventClick, onSlot
             <div ref={scrollRef} style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: dragging ? undefined : 'touch', touchAction: dragging ? 'none' : undefined }}>
                 <div
                     style={{ position: 'relative', minHeight: HOURS.length * HOUR_HEIGHT, display: 'flex' }}
-                    onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchEnd}
                 >
