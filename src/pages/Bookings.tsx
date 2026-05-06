@@ -786,6 +786,19 @@ export function BookingsPage() {
                             onToday={() => setLightCalDate(new Date())}
                             onDateChange={(d) => setLightCalDate(d)}
                             onEventClick={(b) => openEditBooking(b)}
+                            onSlotClick={(dateStr, timeStr) => openNewBooking(dateStr, timeStr)}
+                            onEventDrop={async (bookingId, newStart, newEnd) => {
+                                setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, start_at: newStart, end_at: newEnd } : b))
+                                const { error } = await supabase.from('bookings').update({ start_at: newStart, end_at: newEnd }).eq('id', bookingId)
+                                if (error) {
+                                    console.error('Error updating booking:', error)
+                                    fetchBookings()
+                                } else {
+                                    const t = new Date(newStart).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                                    setToast({ message: `Cita reagendada a las ${t}`, visible: true })
+                                    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000)
+                                }
+                            }}
                             showCompleted={showCompleted}
                             providerFilter={calProviderFilter}
                             onProviderFilterChange={setCalProviderFilter}
