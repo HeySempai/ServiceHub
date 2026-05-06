@@ -111,6 +111,8 @@ export function BookingsPage() {
     const [providers, setProviders] = useState<SelectOption[]>([])
     const [paymentMethods, setPaymentMethods] = useState<SelectOption[]>([])
     const [selectedServices, setSelectedServices] = useState<ServiceOption[]>([])
+    const [clientSearch, setClientSearch] = useState('')
+    const [showClientDropdown, setShowClientDropdown] = useState(false)
 
     // Invoice map: bookingId → InvoiceInfo
     const [bookingInvoices, setBookingInvoices] = useState<Map<string, InvoiceInfo>>(new Map())
@@ -291,6 +293,8 @@ export function BookingsPage() {
             if (calProviderDropdownRef.current && !calProviderDropdownRef.current.contains(target)) {
                 setShowCalProviderDropdown(false)
             }
+            // Close client search dropdown
+            setShowClientDropdown(false)
             // Close table action dropdown if clicking outside
             if (activeDropdownId && !(target as HTMLElement).closest('.dropdown-container')) {
                 setActiveDropdownId(null)
@@ -321,6 +325,9 @@ export function BookingsPage() {
             status: 'scheduled'
         })
         setShowNewClientForm(false)
+        setClientSearch('')
+        setShowClientDropdown(false)
+        setShowDateTimePicker(false)
         setShowModal(true)
     }
 
@@ -1220,14 +1227,42 @@ export function BookingsPage() {
                                                     onClick={() => setShowNewClientForm(true)}
                                                     style={{ padding: '4px 8px', fontSize: '12px' }}
                                                 >
-                                                    <UserPlus size={14} style={{ marginRight: 4 }} /> Nuevo Cliente
+                                                    <UserPlus size={14} style={{ marginRight: 4 }} /> Nuevo
                                                 </button>
                                             )}
                                         </div>
-                                        <select className="form-select" required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
-                                            <option value="">Seleccionar cliente de la base de datos</option>
-                                            {clients.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-                                        </select>
+                                        <div style={{ position: 'relative' }}>
+                                            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
+                                            <input
+                                                className="form-input"
+                                                style={{ paddingLeft: 30 }}
+                                                placeholder="Buscar cliente..."
+                                                value={clientSearch}
+                                                onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
+                                                onFocus={() => setShowClientDropdown(true)}
+                                            />
+                                            {form.client_id && !showClientDropdown && (
+                                                <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                    <span style={{ fontSize: '12px', color: 'var(--color-accent)', fontWeight: 500 }}>{clients.find(c => c.id === form.client_id)?.label}</span>
+                                                    <button type="button" onClick={() => { setForm({ ...form, client_id: '' }); setClientSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                                                        <X size={14} color="var(--color-text-tertiary)" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {showClientDropdown && (
+                                                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', maxHeight: 180, overflowY: 'auto', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                                                    {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
+                                                        <button key={c.id} type="button" className="dropdown-item" style={{ fontSize: '13px' }}
+                                                            onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(''); setShowClientDropdown(false) }}>
+                                                            {c.label}
+                                                        </button>
+                                                    ))}
+                                                    {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
+                                                        <div style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>Sin resultados</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
                                         <label className="form-label">Servicios</label>
@@ -1246,20 +1281,32 @@ export function BookingsPage() {
                                                 ))}
                                             </div>
                                         )}
-                                        {/* Add service dropdown */}
-                                        <select
-                                            className="form-select"
-                                            value=""
-                                            onChange={(e) => {
-                                                const svc = services.find(s => s.id === e.target.value)
-                                                if (svc) setSelectedServices(prev => [...prev, svc])
-                                            }}
-                                        >
-                                            <option value="">+ Agregar servicio...</option>
-                                            {services.map((s) => (
-                                                <option key={s.id} value={s.id}>{s.label} — ${s.price.toLocaleString()}</option>
+                                        {/* Add service buttons */}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 160, overflowY: 'auto', border: '1px solid var(--color-glass-border)', borderRadius: 8, padding: 4 }}>
+                                            {services.filter(s => !selectedServices.some(ss => ss.id === s.id)).map(s => (
+                                                <button
+                                                    key={s.id}
+                                                    type="button"
+                                                    onClick={() => setSelectedServices(prev => [...prev, s])}
+                                                    style={{
+                                                        display: 'flex', alignItems: 'center', gap: 8,
+                                                        padding: '8px 10px', borderRadius: 6,
+                                                        border: 'none', background: 'transparent',
+                                                        cursor: 'pointer', textAlign: 'left', width: '100%',
+                                                    }}
+                                                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-glass-hover)')}
+                                                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                                >
+                                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || 'var(--color-accent)', flexShrink: 0 }} />
+                                                    <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>{s.label}</span>
+                                                    <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>${s.price.toLocaleString()}</span>
+                                                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>{s.duration_min}m</span>
+                                                </button>
                                             ))}
-                                        </select>
+                                            {services.filter(s => !selectedServices.some(ss => ss.id === s.id)).length === 0 && (
+                                                <div style={{ padding: '8px 10px', fontSize: '13px', color: 'var(--color-text-tertiary)', textAlign: 'center' }}>Todos los servicios agregados</div>
+                                            )}
+                                        </div>
                                         {/* Total summary */}
                                         {selectedServices.length > 0 && (
                                             <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
@@ -1275,55 +1322,71 @@ export function BookingsPage() {
                                     </div>
                                     <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
                                         <label className="form-label">{memberLabel}</label>
-                                        <select className="form-select" required value={form.provider_id} onChange={(e) => setForm({ ...form, provider_id: e.target.value })}>
-                                            <option value="">Seleccionar {memberLabel.toLowerCase()}</option>
-                                            {providers.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-                                        </select>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            {providers.map((p) => (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    onClick={() => setForm({ ...form, provider_id: p.id })}
+                                                    style={{
+                                                        flex: 1, padding: '10px 8px', borderRadius: '10px', cursor: 'pointer',
+                                                        border: form.provider_id === p.id ? `2px solid ${p.color || 'var(--color-accent)'}` : '1px solid var(--color-glass-border)',
+                                                        background: form.provider_id === p.id ? (p.color || 'var(--color-accent)') + '20' : 'var(--color-bg-secondary)',
+                                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                                                        transition: 'all 0.15s ease',
+                                                    }}
+                                                >
+                                                    <div style={{
+                                                        width: 32, height: 32, borderRadius: '50%',
+                                                        background: p.color || 'var(--color-accent)',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        color: 'white', fontSize: '13px', fontWeight: 600,
+                                                    }}>
+                                                        {p.label.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                                    </div>
+                                                    <span style={{ fontSize: '12px', fontWeight: form.provider_id === p.id ? 600 : 400, color: 'var(--color-text-primary)', textAlign: 'center', lineHeight: 1.2 }}>
+                                                        {p.label.split(' ')[0]}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                     <div style={{ marginTop: 'var(--space-md)' }}>
                                         <label className="form-label">Fecha y Hora</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <button
-                                                type="button"
-                                                className="form-input"
-                                                onClick={() => setShowDateTimePicker(!showDateTimePicker)}
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                    cursor: 'pointer',
-                                                    padding: '10px 12px'
-                                                }}
-                                            >
-                                                <span style={{
-                                                    color: form.date ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'
-                                                }}>
-                                                    {form.date && form.time
-                                                        ? `${new Date(form.date).toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' })} a las ${form.time}`
-                                                        : 'Seleccionar fecha y hora'
-                                                    }
-                                                </span>
-                                                <CalendarDays size={16} style={{ opacity: 0.6 }} />
-                                            </button>
-                                            {showDateTimePicker && (
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: 'calc(100% + 8px)',
-                                                    left: 0,
-                                                    zIndex: 1000,
-                                                    width: '320px'
-                                                }}>
-                                                    <DateTimePicker
-                                                        selectedDate={form.date}
-                                                        selectedTime={form.time}
-                                                        onDateTimeSelect={(date, time) => {
-                                                            setForm({ ...form, date, time })
-                                                        }}
-                                                        onClose={() => setShowDateTimePicker(false)}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
+                                        <button
+                                            type="button"
+                                            className="form-input"
+                                            onClick={() => setShowDateTimePicker(!showDateTimePicker)}
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                cursor: 'pointer',
+                                                padding: '10px 12px'
+                                            }}
+                                        >
+                                            <span style={{
+                                                color: form.date ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'
+                                            }}>
+                                                {form.date && form.time
+                                                    ? `${new Date(form.date + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' })} a las ${(() => { const [h, m] = form.time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}` })()}`
+                                                    : 'Seleccionar fecha y hora'
+                                                }
+                                            </span>
+                                            <CalendarDays size={16} style={{ opacity: 0.6 }} />
+                                        </button>
+                                        {showDateTimePicker && (
+                                            <div style={{ marginTop: 8 }}>
+                                                <DateTimePicker
+                                                    selectedDate={form.date}
+                                                    selectedTime={form.time}
+                                                    onDateTimeSelect={(date, time) => {
+                                                        setForm({ ...form, date, time })
+                                                    }}
+                                                    onClose={() => setShowDateTimePicker(false)}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     {editingId && (
                                         <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
