@@ -1,11 +1,13 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays, DollarSign, AlertCircle, Sun } from 'lucide-react'
 import { CalendarPicker } from '../components/CalendarPicker'
 import { ClientDetailDrawer } from '../components/ClientDetailDrawer'
 import { DateTimePicker } from '../components/DateTimePicker'
-import FullCalendar from '@fullcalendar/react'
+
+import type FullCalendarType from '@fullcalendar/react'
+const FullCalendar = lazy(() => import('@fullcalendar/react'))
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -57,7 +59,7 @@ const STATUS_CONFIG: Record<string, { bg: string, text: string, label: string, c
 
 export function BookingsPage() {
     const { orgMember, memberLabel, memberLabelPlural } = useAuth()
-    const calendarRef = useRef<FullCalendar>(null)
+    const calendarRef = useRef<FullCalendarType>(null)
     const [detailClientId, setDetailClientId] = useState<string | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -71,12 +73,13 @@ export function BookingsPage() {
     const [calendarReady, setCalendarReady] = useState(false)
     const [calendarTitle, setCalendarTitle] = useState('')
     const [currentCalView, setCurrentCalView] = useState<CalendarViewType>('timeGridWeek')
+    const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null)
 
     // Defer FullCalendar mount to avoid blocking the main thread on low-power devices
     useEffect(() => {
         if (viewMode === 'calendar' && !calendarReady) {
-            const id = requestAnimationFrame(() => setCalendarReady(true))
-            return () => cancelAnimationFrame(id)
+            const id = setTimeout(() => setCalendarReady(true), 50)
+            return () => clearTimeout(id)
         }
         if (viewMode !== 'calendar') setCalendarReady(false)
     }, [viewMode])
@@ -266,11 +269,16 @@ export function BookingsPage() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [viewMode])
 
-    // Update calendar title hook
+    // Update calendar title and visible range
     const updateTitle = useCallback(() => {
         const api = calendarRef.current?.getApi()
         if (api) {
             setCalendarTitle(api.view.title || '')
+            const { activeStart, activeEnd } = api.view
+            setVisibleRange({
+                start: activeStart.toISOString(),
+                end: activeEnd.toISOString(),
+            })
         }
     }, [])
 
@@ -599,10 +607,14 @@ export function BookingsPage() {
         );
     }, [])
 
-    // Map bookings to FullCalendar event format (memoized to prevent re-renders)
+    // Map bookings to FullCalendar event format (memoized, filtered to visible range)
     const events = useMemo(() => bookings
         .filter(b => showCompleted || b.status !== 'completed')
         .filter(b => calProviderFilter === 'all' || b.provider_id === calProviderFilter)
+        .filter(b => {
+            if (!visibleRange) return true
+            return b.end_at >= visibleRange.start && b.start_at <= visibleRange.end
+        })
         .map(b => ({
             id: b.id,
             title: `${b.clients?.first_name} — ${b.booking_services?.length > 0 ? [...b.booking_services].sort((a, x) => a.sort_order - x.sort_order).map(bs => bs.services?.name).join(', ') : (b.services?.name || '')}`,
@@ -616,7 +628,7 @@ export function BookingsPage() {
                 status: b.status,
                 provider: b.org_members?.display_name
             }
-        })), [bookings, showCompleted, calProviderFilter])
+        })), [bookings, showCompleted, calProviderFilter, visibleRange])
 
 
     return (
@@ -769,83 +781,79 @@ export function BookingsPage() {
                 ) : (
                 <div key="calendar" className="card animate-in" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-primary)' }}>
                     <div className="calendar-container" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: 'transparent' }}>
-                        <FullCalendar
-                            ref={calendarRef}
-                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                            initialView={currentCalView}
-                            headerToolbar={false} // Custom header takes over
-                            locale="es"
-                            allDaySlot={false}
-                            slotMinTime="08:00:00"
-                            slotMaxTime="22:00:00"
-                            weekends={showWeekends}
-                            dayMaxEvents={3}
-                            dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
-                            dayHeaderContent={dayHeaderRenderer}
-                            slotLabelContent={slotLabelRenderer}
-                            events={events}
-                            dateClick={(arg) => {
-                                const dateStr = arg.dateStr.split('T')[0]
-                                const timeStr = arg.dateStr.includes('T') ? arg.dateStr.split('T')[1].substring(0, 5) : '09:00'
-                                openNewBooking(dateStr, timeStr)
-                            }}
-                            eventClick={(info) => {
-                                openEditBooking(info.event.extendedProps.raw)
-                            }}
-                            eventDrop={async (info) => {
-                                const newStart = info.event.start?.toISOString()
-                                const newEnd = info.event.end?.toISOString()
+                        <Suspense fallback={<div className="loading-screen" style={{ flex: 1 }}><div className="spinner" /></div>}>
+                            <FullCalendar
+                                ref={calendarRef}
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView={currentCalView}
+                                headerToolbar={false}
+                                locale="es"
+                                allDaySlot={false}
+                                slotMinTime="08:00:00"
+                                slotMaxTime="22:00:00"
+                                weekends={showWeekends}
+                                dayMaxEvents={3}
+                                dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
+                                dayHeaderContent={dayHeaderRenderer}
+                                slotLabelContent={slotLabelRenderer}
+                                events={events}
+                                dateClick={(arg) => {
+                                    const dateStr = arg.dateStr.split('T')[0]
+                                    const timeStr = arg.dateStr.includes('T') ? arg.dateStr.split('T')[1].substring(0, 5) : '09:00'
+                                    openNewBooking(dateStr, timeStr)
+                                }}
+                                eventClick={(info) => {
+                                    openEditBooking(info.event.extendedProps.raw)
+                                }}
+                                eventDrop={async (info) => {
+                                    const newStart = info.event.start?.toISOString()
+                                    const newEnd = info.event.end?.toISOString()
 
-                                if (newStart && newEnd) {
-                                    const oldStart = info.oldEvent.start?.toISOString()
-                                    const oldEnd = info.oldEvent.end?.toISOString()
+                                    if (newStart && newEnd) {
+                                        const oldStart = info.oldEvent.start?.toISOString()
+                                        const oldEnd = info.oldEvent.end?.toISOString()
 
-                                    // Save state for Undo
-                                    if (oldStart && oldEnd) {
-                                        setLastBookingState({ id: info.event.id, start: oldStart, end: oldEnd })
+                                        if (oldStart && oldEnd) {
+                                            setLastBookingState({ id: info.event.id, start: oldStart, end: oldEnd })
+                                        }
+
+                                        setToast({ message: 'Guardando...', visible: true, isSaving: true })
+                                        if (toastTimeout) clearTimeout(toastTimeout)
+
+                                        setBookings(prev => prev.map(b =>
+                                            b.id === info.event.id
+                                                ? { ...b, start_at: newStart, end_at: newEnd }
+                                                : b
+                                        ))
+
+                                        const { error } = await supabase.from('bookings').update({
+                                            start_at: newStart,
+                                            end_at: newEnd
+                                        }).eq('id', info.event.id)
+
+                                        if (error) {
+                                            console.error('Error updating booking:', error)
+                                            setToast({ message: 'Error al guardar', visible: true })
+                                            fetchBookings()
+                                        } else {
+                                            const timeStr = info.event.start?.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                                            setToast({ message: `Se reprogramó el evento para las ${timeStr}`, visible: true, isSaving: false })
+
+                                            const timeout = setTimeout(() => {
+                                                setToast(prev => ({ ...prev, visible: false }))
+                                            }, 5000)
+                                            setToastTimeout(timeout)
+                                        }
                                     }
-
-                                    // 1. Show "Saving" Toast
-                                    setToast({ message: 'Guardando...', visible: true, isSaving: true })
-                                    if (toastTimeout) clearTimeout(toastTimeout)
-
-                                    // 2. Optimistic Update
-                                    setBookings(prev => prev.map(b =>
-                                        b.id === info.event.id
-                                            ? { ...b, start_at: newStart, end_at: newEnd }
-                                            : b
-                                    ))
-
-                                    // 3. Background Update
-                                    const { error } = await supabase.from('bookings').update({
-                                        start_at: newStart,
-                                        end_at: newEnd
-                                    }).eq('id', info.event.id)
-
-                                    if (error) {
-                                        console.error('Error updating booking:', error)
-                                        setToast({ message: 'Error al guardar', visible: true })
-                                        // Revert on error
-                                        fetchBookings()
-                                    } else {
-                                        // Update toast with formatted time
-                                        const timeStr = info.event.start?.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
-                                        setToast({ message: `Se reprogramó el evento para las ${timeStr}`, visible: true, isSaving: false })
-
-                                        const timeout = setTimeout(() => {
-                                            setToast(prev => ({ ...prev, visible: false }))
-                                        }, 5000)
-                                        setToastTimeout(timeout)
-                                    }
-                                }
-                            }}
-                            height="100%"
-                            expandRows={true}
-                            nowIndicator={true}
-                            editable={true}
-                            selectable={true}
-                            datesSet={updateTitle}
-                        />
+                                }}
+                                height="100%"
+                                expandRows={true}
+                                nowIndicator={true}
+                                editable={true}
+                                selectable={true}
+                                datesSet={updateTitle}
+                            />
+                        </Suspense>
                     </div>
                 </div>
                 )
