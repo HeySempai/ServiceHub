@@ -1271,196 +1271,178 @@ export function BookingsPage() {
                                 <button className="modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
                             </div>
 
-                            {/* Render Booking Form */}
+                            {/* Render Booking Form — 2 column POS layout */}
                             {!showNewClientForm ? (
                                 <form onSubmit={handleSaveBooking}>
-                                    <div className="form-group">
-                                        <label className="form-label">Cliente</label>
-                                        <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
-                                            <div style={{ position: 'relative', flex: 1 }}>
-                                                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
-                                                <input
-                                                    className="form-input"
-                                                    style={{ paddingLeft: 30 }}
-                                                    placeholder="Buscar cliente..."
-                                                    value={clientSearch}
-                                                    onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
-                                                    onFocus={() => setShowClientDropdown(true)}
-                                                />
-                                            {form.client_id && !showClientDropdown && (
-                                                <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    <span style={{ fontSize: '12px', color: 'var(--color-accent)', fontWeight: 500 }}>{clients.find(c => c.id === form.client_id)?.label}</span>
-                                                    <button type="button" onClick={() => { setForm({ ...form, client_id: '' }); setClientSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
-                                                        <X size={14} color="var(--color-text-tertiary)" />
-                                                    </button>
-                                                </div>
-                                            )}
-                                                {showClientDropdown && (
-                                                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', maxHeight: 180, overflowY: 'auto', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
-                                                        {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
-                                                            <button key={c.id} type="button" className="dropdown-item" style={{ fontSize: '13px' }}
-                                                                onMouseDown={(e) => { e.preventDefault(); setForm({ ...form, client_id: c.id }); setClientSearch(''); setShowClientDropdown(false) }}>
-                                                                {c.label}
-                                                            </button>
-                                                        ))}
-                                                        {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
-                                                            <div style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>Sin resultados</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)' }}>
+                                        {/* LEFT COLUMN: Client, Provider, Date/Time, Status, Notes */}
+                                        <div>
+                                            <div className="form-group">
+                                                <label className="form-label">Cliente</label>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <div style={{ position: 'relative', flex: 1 }}>
+                                                        <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
+                                                        <input className="form-input" style={{ paddingLeft: 30 }} placeholder="Buscar cliente..." value={clientSearch}
+                                                            onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
+                                                            onFocus={() => setShowClientDropdown(true)} />
+                                                        {form.client_id && !showClientDropdown && (
+                                                            <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                <span style={{ fontSize: '12px', color: 'var(--color-accent)', fontWeight: 500 }}>{clients.find(c => c.id === form.client_id)?.label}</span>
+                                                                <button type="button" onClick={() => { setForm({ ...form, client_id: '' }); setClientSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}><X size={14} color="var(--color-text-tertiary)" /></button>
+                                                            </div>
                                                         )}
+                                                        {showClientDropdown && (
+                                                            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', maxHeight: 160, overflowY: 'auto', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                                                                {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
+                                                                    <button key={c.id} type="button" className="dropdown-item" style={{ fontSize: '13px' }}
+                                                                        onMouseDown={(e) => { e.preventDefault(); setForm({ ...form, client_id: c.id }); setClientSearch(''); setShowClientDropdown(false) }}>{c.label}</button>
+                                                                ))}
+                                                                {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
+                                                                    <div style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>Sin resultados</div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {!editingId && (
+                                                        <button type="button" onClick={() => setShowNewClientForm(true)} title="Nuevo cliente"
+                                                            style={{ width: 38, height: 38, borderRadius: 8, border: 'none', background: 'var(--color-accent)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                            <Plus size={18} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
+                                                <label className="form-label">{memberLabel}</label>
+                                                <div style={{ display: 'flex', gap: 6 }}>
+                                                    {providers.map((p) => (
+                                                        <button key={p.id} type="button" onClick={() => setForm({ ...form, provider_id: p.id })}
+                                                            style={{
+                                                                flex: 1, padding: '8px 6px', borderRadius: '10px', cursor: 'pointer',
+                                                                border: form.provider_id === p.id ? `2px solid ${p.color || 'var(--color-accent)'}` : '1px solid var(--color-glass-border)',
+                                                                background: form.provider_id === p.id ? (p.color || 'var(--color-accent)') + '20' : 'var(--color-bg-secondary)',
+                                                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, transition: 'all 0.15s ease',
+                                                            }}>
+                                                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: p.color || 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 600 }}>
+                                                                {p.label.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                                            </div>
+                                                            <span style={{ fontSize: '11px', fontWeight: form.provider_id === p.id ? 600 : 400, color: 'var(--color-text-primary)' }}>{p.label.split(' ')[0]}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div style={{ marginTop: 'var(--space-md)' }}>
+                                                <label className="form-label">Fecha y Hora</label>
+                                                <button type="button" className="form-input" onClick={() => setShowDateTimePicker(!showDateTimePicker)}
+                                                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '10px 12px' }}>
+                                                    <span style={{ color: form.date ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>
+                                                        {form.date && form.time
+                                                            ? `${new Date(form.date + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' })} a las ${(() => { const [h, m] = form.time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}` })()}`
+                                                            : 'Seleccionar fecha y hora'}
+                                                    </span>
+                                                    <CalendarDays size={16} style={{ opacity: 0.6 }} />
+                                                </button>
+                                                {showDateTimePicker && (
+                                                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setShowDateTimePicker(false) }}>
+                                                        <div onMouseDown={e => e.stopPropagation()} style={{ width: '90%', maxWidth: 380 }}>
+                                                            <DateTimePicker selectedDate={form.date} selectedTime={form.time}
+                                                                onDateTimeSelect={(date, time) => setForm({ ...form, date, time })}
+                                                                onClose={() => setShowDateTimePicker(false)} />
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
-                                            {!editingId && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setShowNewClientForm(true)}
-                                                    title="Nuevo cliente"
-                                                    style={{ width: 38, height: 38, borderRadius: 8, border: 'none', background: 'var(--color-accent)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-                                                >
-                                                    <Plus size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
-                                        <label className="form-label">Servicios y Productos</label>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 6 }}>
-                                            {services.map(s => {
-                                                const sel = selectedServices.find(ss => ss.id === s.id)
-                                                const isSelected = !!sel
-                                                return (
-                                                    <button
-                                                        key={s.id}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (!isSelected) {
-                                                                setSelectedServices(prev => [...prev, { ...s, qty: 1 }])
-                                                            }
-                                                        }}
-                                                        style={{
-                                                            display: 'flex', flexDirection: 'column', alignItems: 'center',
-                                                            gap: 4, padding: '10px 6px', borderRadius: 10, cursor: 'pointer',
-                                                            border: isSelected ? `2px solid ${s.color || 'var(--color-accent)'}` : '1px solid var(--color-glass-border)',
-                                                            background: isSelected ? (s.color || 'var(--color-accent)') + '18' : 'var(--color-bg-secondary)',
-                                                            transition: 'all 0.15s ease', position: 'relative',
-                                                        }}
-                                                    >
-                                                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: s.color || 'var(--color-accent)' }} />
-                                                        <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-primary)', textAlign: 'center', lineHeight: 1.2 }}>{s.label}</span>
-                                                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>${s.price.toLocaleString()}</span>
-                                                        {isSelected && (
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }} onClick={e => e.stopPropagation()}>
-                                                                <button type="button" onClick={() => {
-                                                                    if (sel!.qty <= 1) setSelectedServices(prev => prev.filter(ss => ss.id !== s.id))
-                                                                    else setSelectedServices(prev => prev.map(ss => ss.id === s.id ? { ...ss, qty: ss.qty - 1 } : ss))
-                                                                }} style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--color-glass-border)', background: 'var(--color-bg-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>−</button>
-                                                                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)', minWidth: 16, textAlign: 'center' }}>{sel!.qty}</span>
-                                                                <button type="button" onClick={() => setSelectedServices(prev => prev.map(ss => ss.id === s.id ? { ...ss, qty: ss.qty + 1 } : ss))}
-                                                                    style={{ width: 24, height: 24, borderRadius: '50%', border: 'none', background: s.color || 'var(--color-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600, color: 'white' }}>+</button>
-                                                            </div>
-                                                        )}
-                                                    </button>
-                                                )
-                                            })}
-                                        </div>
-                                        {selectedServices.length > 0 && (
-                                            <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: '13px', color: 'var(--color-text-tertiary)', padding: '8px 0', borderTop: '1px solid var(--color-glass-border)' }}>
-                                                <span>Total: <strong style={{ color: 'var(--color-text-primary)', fontSize: '15px' }}>${selectedServices.reduce((s, x) => s + x.price * x.qty, 0).toLocaleString()}</strong></span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
-                                        <label className="form-label">{memberLabel}</label>
-                                        <div style={{ display: 'flex', gap: 8 }}>
-                                            {providers.map((p) => (
-                                                <button
-                                                    key={p.id}
-                                                    type="button"
-                                                    onClick={() => setForm({ ...form, provider_id: p.id })}
-                                                    style={{
-                                                        flex: 1, padding: '10px 8px', borderRadius: '10px', cursor: 'pointer',
-                                                        border: form.provider_id === p.id ? `2px solid ${p.color || 'var(--color-accent)'}` : '1px solid var(--color-glass-border)',
-                                                        background: form.provider_id === p.id ? (p.color || 'var(--color-accent)') + '20' : 'var(--color-bg-secondary)',
-                                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                                                        transition: 'all 0.15s ease',
-                                                    }}
-                                                >
-                                                    <div style={{
-                                                        width: 32, height: 32, borderRadius: '50%',
-                                                        background: p.color || 'var(--color-accent)',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        color: 'white', fontSize: '13px', fontWeight: 600,
-                                                    }}>
-                                                        {p.label.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                                                    </div>
-                                                    <span style={{ fontSize: '12px', fontWeight: form.provider_id === p.id ? 600 : 400, color: 'var(--color-text-primary)', textAlign: 'center', lineHeight: 1.2 }}>
-                                                        {p.label.split(' ')[0]}
-                                                    </span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div style={{ marginTop: 'var(--space-md)' }}>
-                                        <label className="form-label">Fecha y Hora</label>
-                                        <button
-                                            type="button"
-                                            className="form-input"
-                                            onClick={() => setShowDateTimePicker(!showDateTimePicker)}
-                                            style={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                cursor: 'pointer',
-                                                padding: '10px 12px'
-                                            }}
-                                        >
-                                            <span style={{
-                                                color: form.date ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'
-                                            }}>
-                                                {form.date && form.time
-                                                    ? `${new Date(form.date + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' })} a las ${(() => { const [h, m] = form.time.split(':'); const hr = parseInt(h); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}` })()}`
-                                                    : 'Seleccionar fecha y hora'
-                                                }
-                                            </span>
-                                            <CalendarDays size={16} style={{ opacity: 0.6 }} />
-                                        </button>
-                                        {showDateTimePicker && (
-                                            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setShowDateTimePicker(false) }}>
-                                                <div onMouseDown={e => e.stopPropagation()} style={{ width: '90%', maxWidth: 380 }}>
-                                                    <DateTimePicker
-                                                        selectedDate={form.date}
-                                                        selectedTime={form.time}
-                                                        onDateTimeSelect={(date, time) => {
-                                                            setForm({ ...form, date, time })
-                                                        }}
-                                                        onClose={() => setShowDateTimePicker(false)}
-                                                    />
+
+                                            {editingId && (
+                                                <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
+                                                    <label className="form-label">Estado</label>
+                                                    <select className="form-select" required value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                                                        <option value="scheduled">Programado</option>
+                                                        <option value="completed">Completado</option>
+                                                        <option value="no_show">No Asistió</option>
+                                                        <option value="cancelled">Cancelado</option>
+                                                    </select>
                                                 </div>
+                                            )}
+
+                                            <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
+                                                <label className="form-label">Notas</label>
+                                                <textarea className="form-textarea" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
                                             </div>
-                                        )}
-                                    </div>
-                                    {editingId && (
-                                        <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
-                                            <label className="form-label">Estado de Cita</label>
-                                            <select className="form-select" required value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                                                <option value="scheduled">Programado</option>
-                                                <option value="completed">Completado</option>
-                                                <option value="no_show">No Asistió</option>
-                                                <option value="cancelled">Cancelado</option>
-                                            </select>
                                         </div>
-                                    )}
-                                    <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
-                                        <label className="form-label">Notas</label>
-                                        <textarea className="form-textarea" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+
+                                        {/* RIGHT COLUMN: Service grid + ticket */}
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <label className="form-label">Servicios y Productos</label>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 5 }}>
+                                                {services.map(s => {
+                                                    const sel = selectedServices.find(ss => ss.id === s.id)
+                                                    return (
+                                                        <button key={s.id} type="button"
+                                                            onClick={() => {
+                                                                if (sel) setSelectedServices(prev => prev.map(ss => ss.id === s.id ? { ...ss, qty: ss.qty + 1 } : ss))
+                                                                else setSelectedServices(prev => [...prev, { ...s, qty: 1 }])
+                                                            }}
+                                                            style={{
+                                                                padding: '8px 4px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
+                                                                border: sel ? `2px solid ${s.color || 'var(--color-accent)'}` : '1px solid var(--color-glass-border)',
+                                                                background: sel ? (s.color || 'var(--color-accent)') + '18' : 'var(--color-bg-secondary)',
+                                                                transition: 'all 0.1s ease',
+                                                            }}>
+                                                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || 'var(--color-accent)', margin: '0 auto 3px' }} />
+                                                            <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.2 }}>{s.label}</div>
+                                                            <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', marginTop: 2 }}>${s.price.toLocaleString()}</div>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+
+                                            {/* Ticket / receipt */}
+                                            <div style={{ marginTop: 'var(--space-md)', border: '1px solid var(--color-glass-border)', borderRadius: 10, background: 'var(--color-bg-tertiary)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 120 }}>
+                                                <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--color-glass-border)', fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                    Detalle
+                                                </div>
+                                                <div style={{ flex: 1, padding: '4px 0' }}>
+                                                    {selectedServices.length === 0 && (
+                                                        <div style={{ padding: '16px 12px', textAlign: 'center', fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
+                                                            Selecciona servicios o productos
+                                                        </div>
+                                                    )}
+                                                    {selectedServices.map(s => (
+                                                        <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px' }}>
+                                                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: s.color || 'var(--color-accent)', flexShrink: 0 }} />
+                                                            <span style={{ flex: 1, fontSize: '13px', color: 'var(--color-text-primary)' }}>{s.label}</span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                <button type="button" onClick={() => {
+                                                                    if (s.qty <= 1) setSelectedServices(prev => prev.filter(ss => ss.id !== s.id))
+                                                                    else setSelectedServices(prev => prev.map(ss => ss.id === s.id ? { ...ss, qty: ss.qty - 1 } : ss))
+                                                                }} style={{ width: 22, height: 22, borderRadius: '50%', border: '1px solid var(--color-glass-border)', background: 'var(--color-bg-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>−</button>
+                                                                <span style={{ fontSize: '13px', fontWeight: 600, minWidth: 16, textAlign: 'center' }}>{s.qty}</span>
+                                                                <button type="button" onClick={() => setSelectedServices(prev => prev.map(ss => ss.id === s.id ? { ...ss, qty: ss.qty + 1 } : ss))}
+                                                                    style={{ width: 22, height: 22, borderRadius: '50%', border: 'none', background: s.color || 'var(--color-accent)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 600, color: 'white' }}>+</button>
+                                                            </div>
+                                                            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-secondary)', minWidth: 50, textAlign: 'right' }}>${(s.price * s.qty).toLocaleString()}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {selectedServices.length > 0 && (
+                                                    <div style={{ padding: '8px 12px', borderTop: '1px dashed var(--color-glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Total</span>
+                                                        <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>${selectedServices.reduce((sum, x) => sum + x.price * x.qty, 0).toLocaleString()}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="modal-actions" style={{ justifyContent: editingId ? 'space-between' : 'flex-end', marginTop: 'var(--space-xl)' }}>
+                                    {/* Actions row */}
+                                    <div className="modal-actions" style={{ justifyContent: editingId ? 'space-between' : 'flex-end', marginTop: 'var(--space-lg)' }}>
                                         {editingId ? (
                                             <button type="button" className="btn btn-secondary" style={{ color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.3)', background: 'rgba(239, 68, 68, 0.1)' }} onClick={() => handleDeleteBooking(editingId)}>
                                                 <Trash2 size={16} style={{ marginRight: 6 }} /> Eliminar
                                             </button>
                                         ) : <div />}
-
                                         <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                                             <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
                                             <button type="submit" className="btn btn-primary" disabled={saving}>
