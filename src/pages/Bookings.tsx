@@ -781,9 +781,13 @@ export function BookingsPage() {
                             onPrev={() => setLightCalDate(d => { const n = new Date(d); n.setDate(n.getDate() - 1); return n })}
                             onNext={() => setLightCalDate(d => { const n = new Date(d); n.setDate(n.getDate() + 1); return n })}
                             onToday={() => setLightCalDate(new Date())}
+                            onDateChange={(d) => setLightCalDate(d)}
                             onEventClick={(b) => openEditBooking(b)}
                             showCompleted={showCompleted}
                             providerFilter={calProviderFilter}
+                            onProviderFilterChange={setCalProviderFilter}
+                            providers={providers}
+                            memberLabelPlural={memberLabelPlural}
                         />
                     </div>
                 ) : (
