@@ -374,9 +374,17 @@ export function BookingsPage() {
         setShowModal(true)
     }
 
-    const handleDeleteBooking = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar esta cita?')) return
-        await supabase.from('bookings').delete().eq('id', id)
+    const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; hasInvoice: boolean } | null>(null)
+
+    const handleDeleteBooking = (id: string) => {
+        const hasInvoice = bookingInvoices.has(id)
+        setDeleteConfirm({ id, hasInvoice })
+    }
+
+    const confirmDeleteBooking = async () => {
+        if (!deleteConfirm) return
+        await supabase.from('bookings').delete().eq('id', deleteConfirm.id)
+        setDeleteConfirm(null)
         setShowModal(false)
         fetchBookings()
     }
@@ -1481,6 +1489,47 @@ export function BookingsPage() {
                     </div>
                 )
             }
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirm && (
+                <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Eliminar cita</h3>
+                            <button className="modal-close" onClick={() => setDeleteConfirm(null)}><X size={16} /></button>
+                        </div>
+                        <div style={{ padding: '0 var(--space-lg) var(--space-lg)' }}>
+                            {deleteConfirm.hasInvoice ? (
+                                <>
+                                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginBottom: 12 }}>
+                                        Esta cita tiene un <strong>comprobante asociado</strong> que también será eliminado automáticamente.
+                                    </p>
+                                    <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 8, padding: 12, fontSize: '13px', color: '#f87171', marginBottom: 16 }}>
+                                        <strong>Se eliminará:</strong>
+                                        <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                                            <li>La cita</li>
+                                            <li>El comprobante relacionado</li>
+                                        </ul>
+                                        <div style={{ marginTop: 8, color: 'var(--color-text-secondary)' }}>
+                                            Los pagos registrados <strong>no se eliminan</strong> y se mantendrán como saldo a favor del cliente.
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginBottom: 16 }}>
+                                    ¿Estás seguro que deseas eliminar esta cita? Esta acción no se puede deshacer.
+                                </p>
+                            )}
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button className="btn btn-secondary" style={{ borderRadius: 10 }} onClick={() => setDeleteConfirm(null)}>Cancelar</button>
+                                <button className="btn" style={{ borderRadius: 10, background: '#ef4444', color: 'white', border: 'none' }} onClick={confirmDeleteBooking}>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Quick Pay Modal */}
             {showPayModal && payTarget && payTarget.invoice && (
