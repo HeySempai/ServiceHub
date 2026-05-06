@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays, DollarSign, AlertCircle, Sun } from 'lucide-react'
@@ -563,8 +563,34 @@ export function BookingsPage() {
         return matchesSearch && matchesStatus && matchesProvider && matchesStart && matchesEnd
     })
 
-    // Map bookings to FullCalendar event format
-    const events = bookings
+    const dayHeaderRenderer = useCallback((args: any) => {
+        if (currentCalView === 'dayGridMonth') {
+            return <span className="fc-custom-weekday" style={{ padding: '8px 0' }}>{args.text.toUpperCase()}</span>
+        }
+        const date = args.date;
+        const weekday = date.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.', '').toUpperCase();
+        const dayNum = date.getDate();
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '4px 0' }}>
+                <span className="fc-custom-weekday">{weekday}</span>
+                <span className="fc-custom-daynum">{dayNum}</span>
+            </div>
+        )
+    }, [currentCalView])
+
+    const slotLabelRenderer = useCallback((args: any) => {
+        const hour = args.date.getHours();
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const h = hour % 12 || 12;
+        return (
+            <div className="fc-timegrid-slot-label-frame">
+                <div className="fc-custom-time">{h} {ampm}</div>
+            </div>
+        );
+    }, [])
+
+    // Map bookings to FullCalendar event format (memoized to prevent re-renders)
+    const events = useMemo(() => bookings
         .filter(b => showCompleted || b.status !== 'completed')
         .filter(b => calProviderFilter === 'all' || b.provider_id === calProviderFilter)
         .map(b => ({
@@ -580,7 +606,7 @@ export function BookingsPage() {
                 status: b.status,
                 provider: b.org_members?.display_name
             }
-        }))
+        })), [bookings, showCompleted, calProviderFilter])
 
 
     return (
@@ -742,33 +768,8 @@ export function BookingsPage() {
                             weekends={showWeekends}
                             dayMaxEvents={3}
                             dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
-                            dayHeaderContent={(args) => {
-                                if (currentCalView === 'dayGridMonth') {
-                                    return <span className="fc-custom-weekday" style={{ padding: '8px 0' }}>{args.text.toUpperCase()}</span>
-                                }
-
-                                // Proper date parsing for Physio Pulse style
-                                const date = args.date;
-                                const weekday = date.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.', '').toUpperCase();
-                                const dayNum = date.getDate();
-
-                                return (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '4px 0' }}>
-                                        <span className="fc-custom-weekday">{weekday}</span>
-                                        <span className="fc-custom-daynum">{dayNum}</span>
-                                    </div>
-                                )
-                            }}
-                            slotLabelContent={(args) => {
-                                const hour = args.date.getHours();
-                                const ampm = hour >= 12 ? 'PM' : 'AM';
-                                const h = hour % 12 || 12;
-                                return (
-                                    <div className="fc-timegrid-slot-label-frame">
-                                        <div className="fc-custom-time">{h} {ampm}</div>
-                                    </div>
-                                );
-                            }}
+                            dayHeaderContent={dayHeaderRenderer}
+                            slotLabelContent={slotLabelRenderer}
                             events={events}
                             dateClick={(arg) => {
                                 const dateStr = arg.dateStr.split('T')[0]

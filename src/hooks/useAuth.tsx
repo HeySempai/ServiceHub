@@ -51,8 +51,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('Org member found:', data)
             setOrgMember(data as unknown as OrgMember)
         } else {
-            console.warn('No org member found for user_id:', userId)
-            setOrgMember(null)
+            // No org_member linked by user_id — try to claim a pending invitation via RPC
+            const { data: claimResult, error: claimError } = await supabase.rpc('claim_org_membership')
+
+            if (claimError) {
+                console.error('Error claiming org membership:', claimError)
+                setOrgMember(null)
+            } else if (claimResult?.claimed) {
+                console.log('Claimed pending org membership:', claimResult.org_member.id)
+                setOrgMember(claimResult.org_member as OrgMember)
+            } else {
+                console.warn('No org member to claim:', claimResult?.reason)
+                setOrgMember(null)
+            }
         }
 
         // Explicitly clear loading right after fetch finishes
