@@ -1265,7 +1265,7 @@ export function BookingsPage() {
             {
                 showModal && (
                     <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
+                        <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 780, width: '95%' }}>
                             <div className="modal-header">
                                 <h3 className="modal-title">{editingId ? 'Editar Cita' : 'Nueva Cita'}</h3>
                                 <button className="modal-close" onClick={() => setShowModal(false)}><X size={16} /></button>
