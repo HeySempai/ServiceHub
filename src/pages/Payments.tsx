@@ -422,8 +422,8 @@ export function PaymentsPage() {
                                                         const inv = invoices.find(inv => inv.id === a.invoice_id)
                                                         return inv?.status === 'paid'
                                                     })
-                                                    if (allInvoicesPaid) return 'var(--color-success)'
-                                                    return '#eab308'
+                                                    if (allInvoicesPaid) return 'var(--color-text-tertiary)'
+                                                    return 'var(--color-success)'
                                                 })()
                                         }}>
                                             {fmt(p.amount)}
