@@ -107,7 +107,7 @@ export function ServicesPage() {
         const payload = {
             name: form.name,
             description: form.description || null,
-            duration_min: parseInt(form.duration_min),
+            duration_min: categories.find(c => c.id === form.category_id)?.name === 'Productos' ? 0 : parseInt(form.duration_min),
             price: parseFloat(form.price),
             tax_rate: 0,
             color: form.color,
@@ -282,25 +282,40 @@ export function ServicesPage() {
                                     ))}
                                 </select>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
-                                <div className="form-group">
-                                    <label className="form-label">Precio (MXN) *</label>
-                                    <input
-                                        className="form-input" type="number" step="1" min="0" required
-                                        value={form.price}
-                                        onChange={(e) => setForm({ ...form, price: e.target.value })}
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Duración (min) *</label>
-                                    <input
-                                        className="form-input" type="number" min="5" required
-                                        value={form.duration_min}
-                                        onChange={(e) => setForm({ ...form, duration_min: e.target.value })}
-                                    />
-                                </div>
-                            </div>
+                            {(() => {
+                                const isProduct = categories.find(c => c.id === form.category_id)?.name === 'Productos'
+                                return isProduct ? (
+                                    <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
+                                        <label className="form-label">Precio (MXN) *</label>
+                                        <input
+                                            className="form-input" type="number" step="1" min="0" required
+                                            value={form.price}
+                                            onChange={(e) => setForm({ ...form, price: e.target.value })}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+                                        <div className="form-group">
+                                            <label className="form-label">Precio (MXN) *</label>
+                                            <input
+                                                className="form-input" type="number" step="1" min="0" required
+                                                value={form.price}
+                                                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Duración (min) *</label>
+                                            <input
+                                                className="form-input" type="number" min="5" required
+                                                value={form.duration_min}
+                                                onChange={(e) => setForm({ ...form, duration_min: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })()}
                             <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
                                 <label className="form-label">Color</label>
                                 <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
