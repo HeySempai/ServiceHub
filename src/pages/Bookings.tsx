@@ -1065,7 +1065,16 @@ export function BookingsPage() {
 
                     {/* Data Table */}
                     <div className="table-container" style={{ flex: 1 }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', tableLayout: 'fixed' }}>
+                            <colgroup>
+                                <col style={{ width: '15%' }} />
+                                <col style={{ width: '18%' }} />
+                                <col style={{ width: '22%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '12%' }} />
+                                <col style={{ width: '9%' }} />
+                            </colgroup>
                             <thead style={{ borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
                                 <tr>
                                     <th style={{ padding: '12px 16px', fontWeight: 500 }}>Fecha y Hora</th>
