@@ -358,8 +358,9 @@ export function InvoicesPage() {
                         </thead>
                         <tbody>
                             {filteredInvoices.map(inv => {
-                                const firstLine = inv.invoice_lines
-                                    ?.sort((a, b) => a.sort_order - b.sort_order)[0]?.description || '—'
+                                const sortedLines = inv.invoice_lines?.sort((a, b) => a.sort_order - b.sort_order) || []
+                                const firstLine = sortedLines[0]?.description || '—'
+                                const serviceLabel = sortedLines.length > 1 ? 'Varios' : firstLine
                                 const credit = clients.find(c => c.id === inv.client_id)?.credit_balance || 0
                                 return (
                                     <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-glass-border)', cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
@@ -374,8 +375,11 @@ export function InvoicesPage() {
                                         <td style={{ padding: '10px' }}>
                                             <div style={{ fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap' }}>{inv.clients?.first_name} {inv.clients?.last_name}</div>
                                         </td>
-                                        <td style={{ padding: '10px', fontSize: '12px', color: 'var(--color-text-secondary)', maxWidth: 120 }}>
-                                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{firstLine}</span>
+                                        <td style={{ padding: '10px', fontSize: '12px', color: 'var(--color-text-secondary)', maxWidth: 140 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-accent)', flexShrink: 0 }} />
+                                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{serviceLabel}</span>
+                                            </div>
                                         </td>
                                         <td style={{ padding: '10px', fontSize: '13px', fontWeight: 500, textAlign: 'right' }}>{fmt(inv.total)}</td>
                                         <td style={{ padding: '10px', fontSize: '13px', fontWeight: 500, textAlign: 'right', color: inv.status === 'paid' ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>{fmt(inv.amount_paid)}</td>
