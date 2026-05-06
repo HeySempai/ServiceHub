@@ -68,7 +68,7 @@ export function Sidebar() {
         transition: 'opacity 200ms ease',
         whiteSpace: 'nowrap' as const,
         overflow: 'hidden' as const,
-        pointerEvents: (collapsed ? 'none' : 'auto') as const,
+        pointerEvents: collapsed ? 'none' as const : 'auto' as const,
     }
 
     const sectionLabel = (label: string) => (
