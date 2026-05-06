@@ -95,7 +95,7 @@ export function LightCalendar({ date, bookings, onPrev, onNext, onToday, onEvent
     const dayBookings = useMemo(() => {
         // For day view, don't filter by provider — we show all in columns
         return bookings
-            .filter(b => b.start_at.startsWith(dateStr))
+            .filter(b => toDateStr(new Date(b.start_at)) === dateStr)
             .filter(b => showCompleted || b.status !== 'completed')
             .sort((a, b) => a.start_at.localeCompare(b.start_at))
     }, [bookings, dateStr, showCompleted])
@@ -382,7 +382,7 @@ function WeekView({ weekDays, bookings, onEventClick, onDayClick }: { weekDays: 
         const map: Record<string, Booking[]> = {}
         for (const d of weekDays) map[toDateStr(d)] = []
         for (const b of bookings) {
-            const ds = b.start_at.split('T')[0]
+            const ds = toDateStr(new Date(b.start_at))
             if (map[ds]) map[ds].push(b)
         }
         return map
