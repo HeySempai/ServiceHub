@@ -82,35 +82,35 @@ export function Sidebar() {
                 )}
             </div>
 
-            <nav className="sidebar-nav" style={collapsed ? { alignItems: 'center', padding: '0 var(--space-xs)' } : undefined}>
-                {!collapsed && <span className="sidebar-section-label">General</span>}
-                <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Dashboard" style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}>
+            <nav className="sidebar-nav" style={collapsed ? { alignItems: 'center' } : undefined}>
+                {collapsed ? <div style={{ height: 'var(--space-sm)' }} /> : <span className="sidebar-section-label">General</span>}
+                <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Dashboard" style={collapsed ? { justifyContent: 'center' } : undefined}>
                     <LayoutDashboard />
                     {!collapsed && <span>Dashboard</span>}
                 </NavLink>
 
-                {!collapsed && <span className="sidebar-section-label">Operaciones</span>}
+                {collapsed ? <div style={{ height: 1, background: 'var(--color-glass-border)', width: '60%', margin: 'var(--space-xs) 0' }} /> : <span className="sidebar-section-label">Operaciones</span>}
                 {operationItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
                         title={item.label}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}
+                        style={collapsed ? { justifyContent: 'center' } : undefined}
                     >
                         <item.icon />
                         {!collapsed && <span>{item.label}</span>}
                     </NavLink>
                 ))}
 
-                {!collapsed && <span className="sidebar-section-label">Gestión</span>}
+                {collapsed ? <div style={{ height: 1, background: 'var(--color-glass-border)', width: '60%', margin: 'var(--space-xs) 0' }} /> : <span className="sidebar-section-label">Gestión</span>}
                 {managementItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
                         title={item.label}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}
+                        style={collapsed ? { justifyContent: 'center' } : undefined}
                     >
                         <item.icon />
                         {!collapsed && <span>{item.label}</span>}
@@ -118,8 +118,8 @@ export function Sidebar() {
                 ))}
 
                 <div style={{ marginTop: 'auto', paddingTop: 'var(--space-md)' }}>
-                    {!collapsed && <span className="sidebar-section-label">Sistema</span>}
-                    <NavLink to="/settings" title="Configuración" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} style={collapsed ? { justifyContent: 'center', padding: '10px' } : undefined}>
+                    {collapsed ? <div style={{ height: 1, background: 'var(--color-glass-border)', width: '60%', margin: '0 auto var(--space-xs)' }} /> : <span className="sidebar-section-label">Sistema</span>}
+                    <NavLink to="/settings" title="Configuración" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} style={collapsed ? { justifyContent: 'center' } : undefined}>
                         <Settings />
                         {!collapsed && <span>Configuración</span>}
                     </NavLink>
@@ -127,7 +127,7 @@ export function Sidebar() {
                         onClick={toggleCollapse}
                         className="nav-item"
                         title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-                        style={collapsed ? { justifyContent: 'center', padding: '10px', border: 'none', width: '100%', cursor: 'pointer' } : { border: 'none', width: '100%', cursor: 'pointer' }}
+                        style={collapsed ? { justifyContent: 'center', border: 'none', width: '100%', cursor: 'pointer' } : { border: 'none', width: '100%', cursor: 'pointer' }}
                     >
                         {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
                         {!collapsed && <span>Colapsar</span>}
