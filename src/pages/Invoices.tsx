@@ -372,7 +372,7 @@ export function InvoicesPage() {
                                             {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                                         </td>
                                         <td style={{ padding: '10px' }}>
-                                            <div style={{ fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap' }}>{inv.clients?.first_name} {inv.clients?.last_name?.charAt(0)}.</div>
+                                            <div style={{ fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap' }}>{inv.clients?.first_name} {inv.clients?.last_name}</div>
                                         </td>
                                         <td style={{ padding: '10px', fontSize: '12px', color: 'var(--color-text-secondary)', maxWidth: 120 }}>
                                             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{firstLine}</span>

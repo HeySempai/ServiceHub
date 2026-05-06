@@ -377,7 +377,7 @@ export function PaymentsPage() {
                                             {new Date(p.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                                         </td>
                                         <td style={{ padding: '10px', fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap' }}>
-                                            {p.clients?.first_name} {p.clients?.last_name?.charAt(0)}.
+                                            {p.clients?.first_name} {p.clients?.last_name}
                                         </td>
                                         <td style={{ padding: '10px' }}>
                                             {mName ? (
