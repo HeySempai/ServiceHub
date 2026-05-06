@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -31,6 +31,14 @@ export function Sidebar() {
     const { user, orgMember, signOut } = useAuth()
     const navigate = useNavigate()
     const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
+
+    // Sync CSS variable on mount so main-content margin matches sidebar state
+    useEffect(() => {
+        document.documentElement.style.setProperty(
+            '--sidebar-current',
+            collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'
+        )
+    }, [])
 
     const toggleCollapse = () => {
         const next = !collapsed

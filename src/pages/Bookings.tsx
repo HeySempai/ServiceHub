@@ -68,8 +68,18 @@ export function BookingsPage() {
 
     // View state
     const [viewMode, setViewMode] = useState<ViewMode>('list')
+    const [calendarReady, setCalendarReady] = useState(false)
     const [calendarTitle, setCalendarTitle] = useState('')
     const [currentCalView, setCurrentCalView] = useState<CalendarViewType>('timeGridWeek')
+
+    // Defer FullCalendar mount to avoid blocking the main thread on low-power devices
+    useEffect(() => {
+        if (viewMode === 'calendar' && !calendarReady) {
+            const id = requestAnimationFrame(() => setCalendarReady(true))
+            return () => cancelAnimationFrame(id)
+        }
+        if (viewMode !== 'calendar') setCalendarReady(false)
+    }, [viewMode])
 
     // List view filters
     const [searchQuery, setSearchQuery] = useState('')
@@ -754,6 +764,9 @@ export function BookingsPage() {
             {loading ? (
                 <div className="loading-screen" style={{ flex: 1 }}><div className="spinner" /></div>
             ) : viewMode === 'calendar' ? (
+                !calendarReady ? (
+                    <div className="loading-screen" style={{ flex: 1 }}><div className="spinner" /></div>
+                ) : (
                 <div key="calendar" className="card animate-in" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-primary)' }}>
                     <div className="calendar-container" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: 'transparent' }}>
                         <FullCalendar
@@ -835,6 +848,7 @@ export function BookingsPage() {
                         />
                     </div>
                 </div>
+                )
             ) : (
                 <div key="list" className="card animate-in" style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-primary)', padding: 'var(--space-md)' }}>
 
