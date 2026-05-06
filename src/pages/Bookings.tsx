@@ -57,6 +57,8 @@ const STATUS_CONFIG: Record<string, { bg: string, text: string, label: string, c
     'cancelled': { bg: 'rgba(148, 163, 184, 0.15)', text: '#475569', label: 'Cancelado', color: '#64748b' },
 }
 
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+
 export function BookingsPage() {
     const { orgMember, memberLabel, memberLabelPlural } = useAuth()
     const calendarRef = useRef<FullCalendarType>(null)
@@ -72,8 +74,15 @@ export function BookingsPage() {
     const [viewMode, setViewMode] = useState<ViewMode>('list')
     const [calendarReady, setCalendarReady] = useState(false)
     const [calendarTitle, setCalendarTitle] = useState('')
-    const [currentCalView, setCurrentCalView] = useState<CalendarViewType>('timeGridWeek')
+    const [currentCalView, setCurrentCalView] = useState<CalendarViewType>(isTouchDevice ? 'timeGridDay' : 'timeGridWeek')
     const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null)
+
+    // On touch devices, skip interactionPlugin (drag/drop/selection) to avoid freezing
+    const calendarPlugins = useMemo(() =>
+        isTouchDevice
+            ? [dayGridPlugin, timeGridPlugin]
+            : [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    [])
 
     // Defer FullCalendar mount to avoid blocking the main thread on low-power devices
     useEffect(() => {
@@ -784,73 +793,76 @@ export function BookingsPage() {
                         <Suspense fallback={<div className="loading-screen" style={{ flex: 1 }}><div className="spinner" /></div>}>
                             <FullCalendar
                                 ref={calendarRef}
-                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                plugins={calendarPlugins}
                                 initialView={currentCalView}
                                 headerToolbar={false}
                                 locale="es"
                                 allDaySlot={false}
                                 slotMinTime="08:00:00"
                                 slotMaxTime="22:00:00"
+                                slotDuration={isTouchDevice ? '01:00:00' : '00:30:00'}
                                 weekends={showWeekends}
                                 dayMaxEvents={3}
                                 dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
                                 dayHeaderContent={dayHeaderRenderer}
                                 slotLabelContent={slotLabelRenderer}
                                 events={events}
-                                dateClick={(arg) => {
-                                    const dateStr = arg.dateStr.split('T')[0]
-                                    const timeStr = arg.dateStr.includes('T') ? arg.dateStr.split('T')[1].substring(0, 5) : '09:00'
-                                    openNewBooking(dateStr, timeStr)
-                                }}
                                 eventClick={(info) => {
                                     openEditBooking(info.event.extendedProps.raw)
                                 }}
-                                eventDrop={async (info) => {
-                                    const newStart = info.event.start?.toISOString()
-                                    const newEnd = info.event.end?.toISOString()
+                                {...(!isTouchDevice ? {
+                                    dateClick: (arg: any) => {
+                                        const dateStr = arg.dateStr.split('T')[0]
+                                        const timeStr = arg.dateStr.includes('T') ? arg.dateStr.split('T')[1].substring(0, 5) : '09:00'
+                                        openNewBooking(dateStr, timeStr)
+                                    },
+                                    eventDrop: async (info: any) => {
+                                        const newStart = info.event.start?.toISOString()
+                                        const newEnd = info.event.end?.toISOString()
 
-                                    if (newStart && newEnd) {
-                                        const oldStart = info.oldEvent.start?.toISOString()
-                                        const oldEnd = info.oldEvent.end?.toISOString()
+                                        if (newStart && newEnd) {
+                                            const oldStart = info.oldEvent.start?.toISOString()
+                                            const oldEnd = info.oldEvent.end?.toISOString()
 
-                                        if (oldStart && oldEnd) {
-                                            setLastBookingState({ id: info.event.id, start: oldStart, end: oldEnd })
+                                            if (oldStart && oldEnd) {
+                                                setLastBookingState({ id: info.event.id, start: oldStart, end: oldEnd })
+                                            }
+
+                                            setToast({ message: 'Guardando...', visible: true, isSaving: true })
+                                            if (toastTimeout) clearTimeout(toastTimeout)
+
+                                            setBookings(prev => prev.map(b =>
+                                                b.id === info.event.id
+                                                    ? { ...b, start_at: newStart, end_at: newEnd }
+                                                    : b
+                                            ))
+
+                                            const { error } = await supabase.from('bookings').update({
+                                                start_at: newStart,
+                                                end_at: newEnd
+                                            }).eq('id', info.event.id)
+
+                                            if (error) {
+                                                console.error('Error updating booking:', error)
+                                                setToast({ message: 'Error al guardar', visible: true })
+                                                fetchBookings()
+                                            } else {
+                                                const timeStr = info.event.start?.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                                                setToast({ message: `Se reprogramó el evento para las ${timeStr}`, visible: true, isSaving: false })
+
+                                                const timeout = setTimeout(() => {
+                                                    setToast(prev => ({ ...prev, visible: false }))
+                                                }, 5000)
+                                                setToastTimeout(timeout)
+                                            }
                                         }
-
-                                        setToast({ message: 'Guardando...', visible: true, isSaving: true })
-                                        if (toastTimeout) clearTimeout(toastTimeout)
-
-                                        setBookings(prev => prev.map(b =>
-                                            b.id === info.event.id
-                                                ? { ...b, start_at: newStart, end_at: newEnd }
-                                                : b
-                                        ))
-
-                                        const { error } = await supabase.from('bookings').update({
-                                            start_at: newStart,
-                                            end_at: newEnd
-                                        }).eq('id', info.event.id)
-
-                                        if (error) {
-                                            console.error('Error updating booking:', error)
-                                            setToast({ message: 'Error al guardar', visible: true })
-                                            fetchBookings()
-                                        } else {
-                                            const timeStr = info.event.start?.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
-                                            setToast({ message: `Se reprogramó el evento para las ${timeStr}`, visible: true, isSaving: false })
-
-                                            const timeout = setTimeout(() => {
-                                                setToast(prev => ({ ...prev, visible: false }))
-                                            }, 5000)
-                                            setToastTimeout(timeout)
-                                        }
-                                    }
-                                }}
+                                    },
+                                    editable: true,
+                                    selectable: true,
+                                } : {})}
                                 height="100%"
                                 expandRows={true}
                                 nowIndicator={true}
-                                editable={true}
-                                selectable={true}
                                 datesSet={updateTitle}
                             />
                         </Suspense>
