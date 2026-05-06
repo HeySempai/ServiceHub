@@ -63,9 +63,27 @@ export function Sidebar() {
     const logoUrl = orgMember?.organizations?.logo_url
     const orgName = orgMember?.organizations?.name || 'Mi Negocio'
 
+    const textStyle = {
+        opacity: collapsed ? 0 : 1,
+        transition: 'opacity 200ms ease',
+        whiteSpace: 'nowrap' as const,
+        overflow: 'hidden' as const,
+        pointerEvents: (collapsed ? 'none' : 'auto') as const,
+    }
+
+    const sectionLabel = (label: string) => (
+        <span className="sidebar-section-label" style={{ ...textStyle, height: collapsed ? 8 : undefined }}>
+            {label}
+        </span>
+    )
+
+    const divider = collapsed ? (
+        <div style={{ height: 1, background: 'var(--color-glass-border)', width: '60%', margin: 'var(--space-xs) auto', transition: 'opacity 200ms ease' }} />
+    ) : null
+
     return (
         <aside className="sidebar" style={{ width: collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)' }}>
-            <div className="sidebar-header" style={{ justifyContent: collapsed ? 'center' : undefined, padding: collapsed ? 'var(--space-lg) var(--space-sm)' : undefined }}>
+            <div className="sidebar-header" style={{ overflow: 'hidden' }}>
                 {logoUrl ? (
                     <img
                         src={logoUrl}
@@ -75,78 +93,74 @@ export function Sidebar() {
                 ) : (
                     <div className="sidebar-logo">S</div>
                 )}
-                {!collapsed && (
-                    <div className="sidebar-brand">
-                        <h1>{orgName}</h1>
-                    </div>
-                )}
+                <div className="sidebar-brand" style={textStyle}>
+                    <h1>{orgName}</h1>
+                </div>
             </div>
 
-            <nav className="sidebar-nav" style={collapsed ? { alignItems: 'center' } : undefined}>
-                {collapsed ? <div style={{ height: 'var(--space-sm)' }} /> : <span className="sidebar-section-label">General</span>}
-                <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Dashboard" style={collapsed ? { justifyContent: 'center' } : undefined}>
+            <nav className="sidebar-nav">
+                {sectionLabel('General')}
+                {divider}
+                <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} title="Dashboard">
                     <LayoutDashboard />
-                    {!collapsed && <span>Dashboard</span>}
+                    <span style={textStyle}>Dashboard</span>
                 </NavLink>
 
-                {collapsed ? <div style={{ height: 1, background: 'var(--color-glass-border)', width: '60%', margin: 'var(--space-xs) 0' }} /> : <span className="sidebar-section-label">Operaciones</span>}
+                {sectionLabel('Operaciones')}
+                {divider}
                 {operationItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
                         title={item.label}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        style={collapsed ? { justifyContent: 'center' } : undefined}
                     >
                         <item.icon />
-                        {!collapsed && <span>{item.label}</span>}
+                        <span style={textStyle}>{item.label}</span>
                     </NavLink>
                 ))}
 
-                {collapsed ? <div style={{ height: 1, background: 'var(--color-glass-border)', width: '60%', margin: 'var(--space-xs) 0' }} /> : <span className="sidebar-section-label">Gestión</span>}
+                {sectionLabel('Gestión')}
+                {divider}
                 {managementItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
                         title={item.label}
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        style={collapsed ? { justifyContent: 'center' } : undefined}
                     >
                         <item.icon />
-                        {!collapsed && <span>{item.label}</span>}
+                        <span style={textStyle}>{item.label}</span>
                     </NavLink>
                 ))}
 
                 <div style={{ marginTop: 'auto', paddingTop: 'var(--space-md)' }}>
-                    {collapsed ? <div style={{ height: 1, background: 'var(--color-glass-border)', width: '60%', margin: '0 auto var(--space-xs)' }} /> : <span className="sidebar-section-label">Sistema</span>}
-                    <NavLink to="/settings" title="Configuración" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} style={collapsed ? { justifyContent: 'center' } : undefined}>
+                    {sectionLabel('Sistema')}
+                    {divider}
+                    <NavLink to="/settings" title="Configuración" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                         <Settings />
-                        {!collapsed && <span>Configuración</span>}
+                        <span style={textStyle}>Configuración</span>
                     </NavLink>
                     <button
                         onClick={toggleCollapse}
                         className="nav-item"
                         title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-                        style={collapsed ? { justifyContent: 'center', border: 'none', width: '100%', cursor: 'pointer' } : { border: 'none', width: '100%', cursor: 'pointer' }}
+                        style={{ border: 'none', width: '100%', cursor: 'pointer' }}
                     >
                         {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-                        {!collapsed && <span>Colapsar</span>}
+                        <span style={textStyle}>{collapsed ? 'Expandir' : 'Colapsar'}</span>
                     </button>
                 </div>
             </nav>
 
-            <div className="sidebar-footer">
-                <div className="user-info" onClick={() => setShowLogoutConfirm(true)} title="Cerrar sesión" style={collapsed ? { justifyContent: 'center', padding: '12px' } : undefined}>
+            <div className="sidebar-footer" style={{ overflow: 'hidden' }}>
+                <div className="user-info" onClick={() => setShowLogoutConfirm(true)} title="Cerrar sesión">
                     <div className="user-avatar">{initials}</div>
-                    {!collapsed && (
-                        <>
-                            <div className="user-details">
-                                <span className="name">{orgMember?.display_name || user?.email}</span>
-                                <span className="role">{orgMember?.role || 'usuario'}</span>
-                            </div>
-                            <LogOut style={{ width: 16, height: 16, marginLeft: 'auto', opacity: 0.4 }} />
-                        </>
-                    )}
+                    <div className="user-details" style={textStyle}>
+                        <span className="name">{orgMember?.display_name || user?.email}</span>
+                        <span className="role">{orgMember?.role || 'usuario'}</span>
+                    </div>
+                    <LogOut style={{ ...textStyle, width: 16, height: 16, marginLeft: 'auto', opacity: collapsed ? 0 : 0.4 }} />
                 </div>
             </div>
 
