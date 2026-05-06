@@ -250,8 +250,8 @@ export function PaymentsPage() {
         : 0
 
     const thStyle = (field: SortField): React.CSSProperties => ({
-        padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer',
-        userSelect: 'none', whiteSpace: 'nowrap',
+        padding: '10px 10px', fontWeight: 500, textAlign: 'left', cursor: 'pointer',
+        userSelect: 'none', whiteSpace: 'nowrap', fontSize: '12px',
         color: sortField === field ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)',
     })
 
@@ -340,9 +340,9 @@ export function PaymentsPage() {
             ) : (
                 <div className="data-table-wrapper">
                     <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead style={{ borderBottom: '1px solid var(--color-glass-border)', fontSize: 13 }}>
+                        <thead style={{ borderBottom: '1px solid var(--color-glass-border)', fontSize: 12 }}>
                             <tr>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>Folio</th>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap', fontSize: '12px' }}>Folio</th>
                                 <th style={thStyle('date')} onClick={() => toggleSort('date')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Fecha <SortIcon field="date" /></span>
                                 </th>
@@ -352,12 +352,12 @@ export function PaymentsPage() {
                                 <th style={thStyle('method')} onClick={() => toggleSort('method')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Método <SortIcon field="method" /></span>
                                 </th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>Comprobante</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)' }}>Notas</th>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap', fontSize: '12px' }}>Comp.</th>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left', color: 'var(--color-text-tertiary)', fontSize: '12px' }}>Notas</th>
                                 <th style={{ ...thStyle('amount'), textAlign: 'right' }} onClick={() => toggleSort('amount')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>Monto <SortIcon field="amount" /></span>
                                 </th>
-                                <th style={{ padding: '12px 16px', width: 40 }} />
+                                <th style={{ padding: '10px 6px', width: 36 }} />
                             </tr>
                         </thead>
                         <tbody>
@@ -368,52 +368,52 @@ export function PaymentsPage() {
                                 const isSaldoFavor = !allocs.length
                                 return (
                                     <tr key={p.id} style={{ borderBottom: '1px solid var(--color-glass-border)' }}>
-                                        <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
-                                            <span style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--color-text-tertiary)', background: 'var(--color-glass)', padding: '2px 7px', borderRadius: 5 }}>
-                                                #{p.id.slice(0, 8).toUpperCase()}
+                                        <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>
+                                            <span style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--color-text-tertiary)', background: 'var(--color-glass)', padding: '2px 6px', borderRadius: 4 }}>
+                                                #{p.id.slice(0, 6).toUpperCase()}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '14px 16px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                                            {new Date(p.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        <td style={{ padding: '10px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                                            {new Date(p.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                                         </td>
-                                        <td style={{ padding: '14px 16px', fontWeight: 500 }}>
-                                            {p.clients?.first_name} {p.clients?.last_name}
+                                        <td style={{ padding: '10px', fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap' }}>
+                                            {p.clients?.first_name} {p.clients?.last_name?.charAt(0)}.
                                         </td>
-                                        <td style={{ padding: '14px 16px' }}>
+                                        <td style={{ padding: '10px' }}>
                                             {mName ? (
-                                                <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: mColor + '22', color: mColor }}>
+                                                <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '10px', fontSize: 11, fontWeight: 500, background: mColor + '22', color: mColor, whiteSpace: 'nowrap' }}>
                                                     {mName}
                                                 </span>
                                             ) : <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>}
                                         </td>
-                                        <td style={{ padding: '14px 16px', fontSize: '12px' }}>
+                                        <td style={{ padding: '10px', fontSize: '11px' }}>
                                             {isSaldoFavor ? (
                                                 <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>Saldo a favor</span>
                                             ) : (
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                                     {allocs.map((a, i) => {
                                                         const inv = invoices.find(inv => inv.id === a.invoice_id)
-                                                        const invNum = inv?.invoice_number || a.invoice_id.slice(0, 8)
+                                                        const invNum = (inv?.invoice_number || a.invoice_id.slice(0, 6)).replace(/^INV-/i, '')
                                                         const firstLine = inv?.invoice_lines?.sort((x, y) => x.sort_order - y.sort_order)[0]?.description || ''
-                                                        const invDate = inv ? new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+                                                        const invDate = inv ? new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }) : ''
                                                         const tooltipText = inv ? `${firstLine}\nTotal: ${fmt(inv.total)} · ${invDate}` : ''
                                                         return (
-                                                            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }} title={tooltipText}>
+                                                            <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', whiteSpace: 'nowrap' }} title={tooltipText}>
                                                                 <span
-                                                                    style={{ color: 'var(--color-accent)', fontFamily: 'monospace', cursor: 'pointer' }}
+                                                                    style={{ color: 'var(--color-accent)', fontFamily: 'monospace', cursor: 'pointer', fontSize: '11px' }}
                                                                     onClick={() => setSelectedInvoiceId(a.invoice_id)}
                                                                 >{invNum}</span>
-                                                                <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>{fmt(a.amount_allocated)}</span>
+                                                                <span style={{ color: 'var(--color-text-secondary)', fontSize: '10px' }}>{fmt(a.amount_allocated)}</span>
                                                             </div>
                                                         )
                                                     })}
                                                 </div>
                                             )}
                                         </td>
-                                        <td style={{ padding: '14px 16px', color: 'var(--color-text-tertiary)', fontSize: '13px' }}>
+                                        <td style={{ padding: '10px', color: 'var(--color-text-tertiary)', fontSize: '12px', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                             {isSaldoFavor ? '—' : (p.notes || '—')}
                                         </td>
-                                        <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: '14px',
+                                        <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, fontSize: '13px',
                                             color: isSaldoFavor ? 'var(--color-text-tertiary)'
                                                 : (() => {
                                                     const totalAllocated = allocs.reduce((s, a) => s + a.amount_allocated, 0)
@@ -428,7 +428,7 @@ export function PaymentsPage() {
                                         }}>
                                             {fmt(p.amount)}
                                         </td>
-                                        <td style={{ padding: '14px 8px', textAlign: 'right' }}>
+                                        <td style={{ padding: '10px 6px', textAlign: 'right' }}>
                                             <div style={{ position: 'relative', display: 'inline-block' }} ref={activeMenuId === p.id ? menuRef : undefined}>
                                                 <button className="btn-icon"
                                                     style={{ width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -454,10 +454,10 @@ export function PaymentsPage() {
                         </tbody>
                         <tfoot style={{ borderTop: '2px solid var(--color-glass-border)' }}>
                             <tr>
-                                <td colSpan={5} style={{ padding: '12px 16px', color: 'var(--color-text-tertiary)', fontSize: '13px', fontWeight: 500 }}>
+                                <td colSpan={6} style={{ padding: '10px', color: 'var(--color-text-tertiary)', fontSize: '12px', fontWeight: 500 }}>
                                     Total {hasFilters ? 'filtrado' : 'general'}
                                 </td>
-                                <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '14px', color: 'var(--color-success)' }}>
+                                <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--color-success)' }}>
                                     {fmt(totalFiltered)}
                                 </td>
                                 <td />

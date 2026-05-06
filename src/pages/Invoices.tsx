@@ -333,27 +333,27 @@ export function InvoicesPage() {
                 <div className="card"><div className="empty-state"><FileText /><h3>Sin comprobantes aún</h3><p>Crea un nuevo comprobante para comenzar.</p></div></div>
             ) : (
                 <div className="data-table-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table className="data-table" style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse' }}>
-                        <thead style={{ borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-tertiary)', fontSize: 13 }}>
+                    <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead style={{ borderBottom: '1px solid var(--color-glass-border)', color: 'var(--color-text-tertiary)', fontSize: 12 }}>
                             <tr>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Folio</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('date')}>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left' }}>Folio</th>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('date')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'date' ? 'var(--color-text-primary)' : undefined }}>Fecha {sortField === 'date' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
                                 </th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('client')}>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('client')}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'client' ? 'var(--color-text-primary)' : undefined }}>Cliente {sortField === 'client' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
                                 </th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Servicio</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('total')}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'total' ? 'var(--color-text-primary)' : undefined }}>Total {sortField === 'total' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left' }}>Servicio</th>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'right', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('total')}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', color: sortField === 'total' ? 'var(--color-text-primary)' : undefined }}>Total {sortField === 'total' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
                                 </th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Pagado</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('balance')}>
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: sortField === 'balance' ? 'var(--color-text-primary)' : undefined }}>Restante {sortField === 'balance' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'right' }}>Pagado</th>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'right', cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('balance')}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', color: sortField === 'balance' ? 'var(--color-text-primary)' : undefined }}>Saldo {sortField === 'balance' ? (sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />) : <ChevronDown size={12} style={{ opacity: 0.3 }} />}</span>
                                 </th>
-                                <th style={{ padding: '12px 8px', fontWeight: 500, textAlign: 'center' }}>Factura</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'left' }}>Estado</th>
-                                <th style={{ padding: '12px 16px', fontWeight: 500, textAlign: 'right' }}>Acciones</th>
+                                <th style={{ padding: '10px 6px', fontWeight: 500, textAlign: 'center' }}>Fact.</th>
+                                <th style={{ padding: '10px 10px', fontWeight: 500, textAlign: 'left' }}>Estado</th>
+                                <th style={{ padding: '10px 6px', fontWeight: 500, textAlign: 'right' }}></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -363,34 +363,26 @@ export function InvoicesPage() {
                                 const credit = clients.find(c => c.id === inv.client_id)?.credit_balance || 0
                                 return (
                                     <tr key={inv.id} style={{ borderBottom: '1px solid var(--color-glass-border)', cursor: 'pointer' }} onClick={() => setSelectedInvoiceId(inv.id)}>
-                                        <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>
-                                            <span style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--color-text-tertiary)', background: 'var(--color-glass)', padding: '2px 7px', borderRadius: 5 }}>
-                                                {inv.invoice_number || '—'}
+                                        <td style={{ padding: '10px', whiteSpace: 'nowrap' }}>
+                                            <span style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--color-text-tertiary)', background: 'var(--color-glass)', padding: '2px 6px', borderRadius: 4 }}>
+                                                {(inv.invoice_number || '—').replace(/^INV-/i, '')}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '16px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                                            {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        <td style={{ padding: '10px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                                            {new Date(inv.issued_at + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                                         </td>
-                                        <td style={{ padding: '16px' }}>
-                                            <div style={{ fontWeight: 500 }}>{inv.clients?.first_name} {inv.clients?.last_name}</div>
-                                            {credit > 0 && (
-                                                <div style={{ fontSize: '11px', color: 'var(--color-success)', marginTop: 2 }}>
-                                                    Saldo a favor: {fmt(credit)}
-                                                </div>
-                                            )}
+                                        <td style={{ padding: '10px' }}>
+                                            <div style={{ fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap' }}>{inv.clients?.first_name} {inv.clients?.last_name?.charAt(0)}.</div>
                                         </td>
-                                        <td style={{ padding: '16px', fontSize: '13px', color: 'var(--color-text-secondary)', maxWidth: 180 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-accent)', flexShrink: 0 }} />
-                                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstLine}</span>
-                                            </div>
+                                        <td style={{ padding: '10px', fontSize: '12px', color: 'var(--color-text-secondary)', maxWidth: 120 }}>
+                                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{firstLine}</span>
                                         </td>
-                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 500 }}>{fmt(inv.total)}</td>
-                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 500, color: inv.status === 'paid' ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>{fmt(inv.amount_paid)}</td>
-                                        <td style={{ padding: '16px', fontSize: '14px', fontWeight: 500, color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)', opacity: inv.balance_due === 0 ? 0.5 : 1 }}>
+                                        <td style={{ padding: '10px', fontSize: '13px', fontWeight: 500, textAlign: 'right' }}>{fmt(inv.total)}</td>
+                                        <td style={{ padding: '10px', fontSize: '13px', fontWeight: 500, textAlign: 'right', color: inv.status === 'paid' ? 'var(--color-success)' : 'var(--color-text-secondary)' }}>{fmt(inv.amount_paid)}</td>
+                                        <td style={{ padding: '10px', fontSize: '13px', fontWeight: 500, textAlign: 'right', color: inv.balance_due > 0 ? '#eab308' : 'var(--color-text-tertiary)', opacity: inv.balance_due === 0 ? 0.5 : 1 }}>
                                             {fmt(inv.balance_due)}
                                         </td>
-                                        <td style={{ padding: '16px 8px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                                        <td style={{ padding: '10px 6px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                                             <button
                                                 onClick={() => handleToggleFactura(inv.id, !inv.requires_cfdi)}
                                                 title={inv.requires_cfdi ? 'Requiere factura fiscal' : 'No requiere factura fiscal'}
@@ -406,12 +398,12 @@ export function InvoicesPage() {
                                                 {inv.requires_cfdi && <CheckCircle2 size={20} style={{ color: 'white' }} />}
                                             </button>
                                         </td>
-                                        <td style={{ padding: '16px' }}>
-                                            <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: 12, fontWeight: 500, background: STATUS_CONFIG[inv.status]?.bg, color: STATUS_CONFIG[inv.status]?.color }}>
+                                        <td style={{ padding: '10px' }}>
+                                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '10px', fontSize: 11, fontWeight: 500, background: STATUS_CONFIG[inv.status]?.bg, color: STATUS_CONFIG[inv.status]?.color, whiteSpace: 'nowrap' }}>
                                                 {STATUS_CONFIG[inv.status]?.label || inv.status}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '16px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                                        <td style={{ padding: '10px 6px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                                             <div style={{ position: 'relative', display: 'inline-block' }}>
                                                 <button className="btn-icon" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                     onClick={e => { e.stopPropagation(); setActiveDropdownId(activeDropdownId === inv.id ? null : inv.id) }}>

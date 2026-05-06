@@ -103,8 +103,7 @@ export function BookingsPage() {
     // Edit/Create state
     const [editingId, setEditingId] = useState<string | null>(null)
     const [showNewClientForm, setShowNewClientForm] = useState(false)
-    const [newClientName, setNewClientName] = useState('')
-    const [newClientPhone, setNewClientPhone] = useState('')
+    const [newClientForm, setNewClientForm] = useState({ first_name: '', last_name: '', phone: '', email: '', gender: '' as '' | 'Masculino' | 'Femenino' | 'Otro' })
 
     const [clients, setClients] = useState<SelectOption[]>([])
     const [services, setServices] = useState<ServiceOption[]>([])
@@ -383,27 +382,24 @@ export function BookingsPage() {
     }
 
     const handleCreateClient = async () => {
-        if (!newClientName || !orgId) return
+        if (!newClientForm.first_name.trim() || !orgId) return
         setSaving(true)
-
-        const names = newClientName.split(' ')
-        const firstName = names[0]
-        const lastName = names.slice(1).join(' ') || ''
 
         const { data, error } = await supabase.from('clients').insert({
             org_id: orgId,
-            first_name: firstName,
-            last_name: lastName,
-            phone: newClientPhone || null,
+            first_name: newClientForm.first_name.trim(),
+            last_name: newClientForm.last_name.trim() || null,
+            phone: newClientForm.phone || null,
+            email: newClientForm.email || null,
+            gender: newClientForm.gender || null,
         }).select('id, first_name, last_name').single()
 
         if (data && !error) {
-            const newOption = { id: data.id, label: `${data.first_name} ${data.last_name}` }
+            const newOption = { id: data.id, label: `${data.first_name} ${data.last_name || ''}`.trim() }
             setClients(prev => [...prev, newOption].sort((a, b) => a.label.localeCompare(b.label)))
             setForm(prev => ({ ...prev, client_id: data.id }))
             setShowNewClientForm(false)
-            setNewClientName('')
-            setNewClientPhone('')
+            setNewClientForm({ first_name: '', last_name: '', phone: '', email: '', gender: '' })
         }
         setSaving(false)
     }
@@ -1421,29 +1417,38 @@ export function BookingsPage() {
                                     </div>
                                 </form>
                             ) : (
-                                /* Render Quick Client Creation Form */
-                                <div style={{ background: 'var(--color-glass-surface)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-glass-border)' }}>
-                                    <h4>Crear Nuevo Cliente Rápido</h4>
-                                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', marginBottom: 'var(--space-md)' }}>El cliente se auto-seleccionará para esta cita tras guardarlo.</p>
+                                /* Render Client Creation Form (same fields as Clients page) */
+                                <div>
+                                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: '13px', marginBottom: 'var(--space-md)' }}>El cliente se auto-seleccionará para esta cita.</p>
 
-                                    <div className="form-group">
-                                        <label className="form-label">Nombre Completo</label>
-                                        <input
-                                            className="form-input"
-                                            autoFocus
-                                            placeholder="Ej. Juan Pérez"
-                                            value={newClientName}
-                                            onChange={(e) => setNewClientName(e.target.value)}
-                                        />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
+                                        <div className="form-group">
+                                            <label className="form-label">Nombre</label>
+                                            <input className="form-input" autoFocus required placeholder="Nombre" value={newClientForm.first_name} onChange={(e) => setNewClientForm({ ...newClientForm, first_name: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Apellido</label>
+                                            <input className="form-input" placeholder="Apellido" value={newClientForm.last_name} onChange={(e) => setNewClientForm({ ...newClientForm, last_name: e.target.value })} />
+                                        </div>
                                     </div>
                                     <div className="form-group" style={{ marginTop: 'var(--space-md)' }}>
-                                        <label className="form-label">Teléfono (Opcional)</label>
-                                        <input
-                                            className="form-input"
-                                            placeholder="+52..."
-                                            value={newClientPhone}
-                                            onChange={(e) => setNewClientPhone(e.target.value)}
-                                        />
+                                        <label className="form-label">Género</label>
+                                        <select className="form-input" value={newClientForm.gender} onChange={(e) => setNewClientForm({ ...newClientForm, gender: e.target.value as any })}>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Masculino">Masculino</option>
+                                            <option value="Femenino">Femenino</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+                                        <div className="form-group">
+                                            <label className="form-label">Teléfono</label>
+                                            <input className="form-input" placeholder="+52..." value={newClientForm.phone} onChange={(e) => setNewClientForm({ ...newClientForm, phone: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Email</label>
+                                            <input className="form-input" type="email" placeholder="correo@ejemplo.com" value={newClientForm.email} onChange={(e) => setNewClientForm({ ...newClientForm, email: e.target.value })} />
+                                        </div>
                                     </div>
 
                                     <div className="modal-actions" style={{ marginTop: 'var(--space-lg)' }}>
@@ -1451,7 +1456,7 @@ export function BookingsPage() {
                                         <button
                                             type="button"
                                             className="btn btn-primary"
-                                            disabled={saving || !newClientName.trim()}
+                                            disabled={saving || !newClientForm.first_name.trim()}
                                             onClick={handleCreateClient}
                                         >
                                             {saving ? <span className="spinner" /> : 'Crear y Seleccionar'}
