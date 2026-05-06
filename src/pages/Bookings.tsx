@@ -312,12 +312,12 @@ export function BookingsPage() {
     }, [loading, viewMode, updateTitle])
 
     // Form handlers
-    const openNewBooking = (dateStr?: string, timeStr?: string) => {
+    const openNewBooking = (dateStr?: string, timeStr?: string, providerId?: string) => {
         setEditingId(null)
         setSelectedServices([])
         setForm({
             client_id: '',
-            provider_id: orgMember?.id || '',
+            provider_id: providerId || orgMember?.id || '',
             date: dateStr || new Date().toLocaleDateString('en-CA'),
             time: timeStr || '09:00',
             notes: '',
@@ -794,7 +794,7 @@ export function BookingsPage() {
                             onToday={() => setLightCalDate(new Date())}
                             onDateChange={(d) => setLightCalDate(d)}
                             onEventClick={(b) => openEditBooking(b)}
-                            onSlotClick={(dateStr, timeStr) => openNewBooking(dateStr, timeStr)}
+                            onSlotClick={(dateStr, timeStr, providerId) => openNewBooking(dateStr, timeStr, providerId)}
                             onEventDrop={async (bookingId, newStart, newEnd) => {
                                 setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, start_at: newStart, end_at: newEnd } : b))
                                 const { error } = await supabase.from('bookings').update({ start_at: newStart, end_at: newEnd }).eq('id', bookingId)
@@ -802,6 +802,34 @@ export function BookingsPage() {
                                     console.error('Error updating booking:', error)
                                     fetchBookings()
                                 } else {
+                                    const t = new Date(newStart).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                                    setToast({ message: `Cita reagendada a las ${t}`, visible: true })
+                                    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000)
+                                }
+                            }}
+                            showCompleted={showCompleted}
+                            providerFilter={calProviderFilter}
+                            onProviderFilterChange={setCalProviderFilter}
+                            providers={providers}
+                            memberLabelPlural={memberLabelPlural}
+                        />
+                    </div>
+                ) : (
+                currentCalView === 'timeGridDay' ? (
+                    <div key="desktop-day" className="card animate-in" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-primary)' }}>
+                        <LightCalendar
+                            date={calendarRef.current?.getApi()?.getDate() || new Date()}
+                            bookings={bookings}
+                            onPrev={() => { calendarRef.current?.getApi().prev(); updateTitle() }}
+                            onNext={() => { calendarRef.current?.getApi().next(); updateTitle() }}
+                            onToday={() => { calendarRef.current?.getApi().today(); updateTitle() }}
+                            onDateChange={(d) => { calendarRef.current?.getApi().gotoDate(d); updateTitle() }}
+                            onEventClick={(b) => openEditBooking(b)}
+                            onSlotClick={(dateStr, timeStr, providerId) => openNewBooking(dateStr, timeStr, providerId)}
+                            onEventDrop={async (bookingId, newStart, newEnd) => {
+                                setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, start_at: newStart, end_at: newEnd } : b))
+                                const { error } = await supabase.from('bookings').update({ start_at: newStart, end_at: newEnd }).eq('id', bookingId)
+                                if (error) { fetchBookings() } else {
                                     const t = new Date(newStart).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
                                     setToast({ message: `Cita reagendada a las ${t}`, visible: true })
                                     setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000)
@@ -890,6 +918,7 @@ export function BookingsPage() {
                         />
                     </div>
                 </div>
+                )
                 )
             ) : (
                 <div key="list" className="card animate-in" style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-primary)', padding: 'var(--space-md)' }}>

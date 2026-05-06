@@ -29,7 +29,7 @@ const STATUS_COLORS: Record<string, string> = {
     'cancelled': '#64748b',
 }
 
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 8) // 8am to 9pm
+const HOURS = Array.from({ length: 14 }, (_, i) => i + 8)
 const HOUR_HEIGHT = 60
 
 type LightView = 'day' | 'week'
@@ -68,7 +68,7 @@ interface LightCalendarProps {
     onNext: () => void
     onToday: () => void
     onEventClick: (booking: Booking) => void
-    onSlotClick?: (dateStr: string, timeStr: string) => void
+    onSlotClick?: (dateStr: string, timeStr: string, providerId?: string) => void
     onEventDrop?: (bookingId: string, newStart: string, newEnd: string) => void
     showCompleted: boolean
     providerFilter: string
@@ -93,8 +93,12 @@ export function LightCalendar({ date, bookings, onPrev, onNext, onToday, onEvent
     }, [bookings, showCompleted, providerFilter])
 
     const dayBookings = useMemo(() => {
-        return filteredBookings.filter(b => b.start_at.startsWith(dateStr))
-    }, [filteredBookings, dateStr])
+        // For day view, don't filter by provider — we show all in columns
+        return bookings
+            .filter(b => b.start_at.startsWith(dateStr))
+            .filter(b => showCompleted || b.status !== 'completed')
+            .sort((a, b) => a.start_at.localeCompare(b.start_at))
+    }, [bookings, dateStr, showCompleted])
 
     const title = view === 'day'
         ? date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -135,30 +139,32 @@ export function LightCalendar({ date, bookings, onPrev, onNext, onToday, onEvent
                 </button>
                 <span style={{ fontSize: '15px', fontWeight: 500, color: 'var(--color-text-primary)', textTransform: 'capitalize', flex: 1, minWidth: 0 }}>{title}</span>
 
-                {/* Provider filter */}
-                <div style={{ position: 'relative' }}>
-                    <button onClick={() => setShowProviderDropdown(!showProviderDropdown)}
-                        style={{ background: providerFilter !== 'all' ? 'var(--color-accent-soft)' : 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '12px', padding: '4px 10px', fontSize: '12px', color: 'var(--color-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                        {providerFilter !== 'all' && <div style={{ width: 6, height: 6, borderRadius: '50%', background: providers.find(p => p.id === providerFilter)?.color || 'var(--color-accent)' }} />}
-                        {providerLabel}
-                        <ChevronDown size={12} />
-                    </button>
-                    {showProviderDropdown && (
-                        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, width: '200px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 50, overflow: 'hidden' }}>
-                            <button className="dropdown-item" style={{ fontSize: '13px' }} onClick={() => { onProviderFilterChange('all'); setShowProviderDropdown(false) }}>
-                                Todos los {memberLabelPlural.toLowerCase()}
-                            </button>
-                            {providers.map(p => (
-                                <button key={p.id} className="dropdown-item" style={{ fontSize: '13px' }} onClick={() => { onProviderFilterChange(p.id); setShowProviderDropdown(false) }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: p.color || 'var(--color-accent)' }} />
-                                        {p.label}
-                                    </div>
+                {/* Provider filter — only show in week view */}
+                {view === 'week' && (
+                    <div style={{ position: 'relative' }}>
+                        <button onClick={() => setShowProviderDropdown(!showProviderDropdown)}
+                            style={{ background: providerFilter !== 'all' ? 'var(--color-accent-soft)' : 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '12px', padding: '4px 10px', fontSize: '12px', color: 'var(--color-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                            {providerFilter !== 'all' && <div style={{ width: 6, height: 6, borderRadius: '50%', background: providers.find(p => p.id === providerFilter)?.color || 'var(--color-accent)' }} />}
+                            {providerLabel}
+                            <ChevronDown size={12} />
+                        </button>
+                        {showProviderDropdown && (
+                            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, width: '200px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', zIndex: 50, overflow: 'hidden' }}>
+                                <button className="dropdown-item" style={{ fontSize: '13px' }} onClick={() => { onProviderFilterChange('all'); setShowProviderDropdown(false) }}>
+                                    Todos los {memberLabelPlural.toLowerCase()}
                                 </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                {providers.map(p => (
+                                    <button key={p.id} className="dropdown-item" style={{ fontSize: '13px' }} onClick={() => { onProviderFilterChange(p.id); setShowProviderDropdown(false) }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: p.color || 'var(--color-accent)' }} />
+                                            {p.label}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* View toggle */}
                 <div style={{ display: 'flex', background: 'var(--color-bg-secondary)', borderRadius: '12px', border: '1px solid var(--color-glass-border)' }}>
@@ -175,7 +181,14 @@ export function LightCalendar({ date, bookings, onPrev, onNext, onToday, onEvent
 
             {/* Content */}
             {view === 'day' ? (
-                <DayView bookings={dayBookings} dateStr={dateStr} onEventClick={onEventClick} onSlotClick={onSlotClick} onEventDrop={onEventDrop} />
+                <MultiColumnDayView
+                    bookings={dayBookings}
+                    dateStr={dateStr}
+                    providers={providers}
+                    onEventClick={onEventClick}
+                    onSlotClick={onSlotClick}
+                    onEventDrop={onEventDrop}
+                />
             ) : (
                 <WeekView weekDays={weekDays} bookings={filteredBookings} onEventClick={onEventClick} onDayClick={(d) => { onDateChange(d); setView('day') }} />
             )}
@@ -183,58 +196,51 @@ export function LightCalendar({ date, bookings, onPrev, onNext, onToday, onEvent
     )
 }
 
-/* ─── Day View ─── */
-function DayView({ bookings, dateStr, onEventClick, onSlotClick, onEventDrop }: {
-    bookings: Booking[]; dateStr: string; onEventClick: (b: Booking) => void
-    onSlotClick?: (dateStr: string, timeStr: string) => void
+/* ─── Multi-Column Day View ─── */
+function MultiColumnDayView({ bookings, dateStr, providers, onEventClick, onSlotClick, onEventDrop }: {
+    bookings: Booking[]; dateStr: string; providers: Provider[]
+    onEventClick: (b: Booking) => void
+    onSlotClick?: (dateStr: string, timeStr: string, providerId?: string) => void
     onEventDrop?: (bookingId: string, newStart: string, newEnd: string) => void
 }) {
-    const gridRef = useRef<HTMLDivElement>(null)
+    const scrollRef = useRef<HTMLDivElement>(null)
     const [dragging, setDragging] = useState<{ booking: Booking; offsetMin: number; currentTop: number } | null>(null)
     const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
     const touchStartY = useRef(0)
     const didDrag = useRef(false)
 
-    // Calculate Y position to minutes
+    const bookingsByProvider = useMemo(() => {
+        const map: Record<string, Booking[]> = {}
+        for (const p of providers) map[p.id] = []
+        for (const b of bookings) {
+            if (map[b.provider_id]) map[b.provider_id].push(b)
+        }
+        return map
+    }, [bookings, providers])
+
     const yToMin = useCallback((clientY: number) => {
-        if (!gridRef.current) return 0
-        const rect = gridRef.current.getBoundingClientRect()
-        return ((clientY - rect.top + gridRef.current.scrollTop) / HOUR_HEIGHT) * 60
+        if (!scrollRef.current) return 0
+        const rect = scrollRef.current.getBoundingClientRect()
+        return ((clientY - rect.top + scrollRef.current.scrollTop) / HOUR_HEIGHT) * 60
     }, [])
 
-    // Tap on empty slot → create new booking
-    const handleGridClick = useCallback((e: React.MouseEvent) => {
-        if (!onSlotClick || didDrag.current) return
-        // Don't fire if clicking on an event
-        if ((e.target as HTMLElement).closest('[data-event]')) return
-        const min = snapToGrid(yToMin(e.clientY))
-        onSlotClick(dateStr, minToTime(min))
-    }, [onSlotClick, dateStr, yToMin])
-
-    // Long-press start on event (touch)
     const handleTouchStart = useCallback((e: React.TouchEvent, booking: Booking) => {
         didDrag.current = false
         touchStartY.current = e.touches[0].clientY
         const startMin = (new Date(booking.start_at).getHours() - 8) * 60 + new Date(booking.start_at).getMinutes()
 
         longPressTimer.current = setTimeout(() => {
-            // Vibrate for haptic feedback if available
             if (navigator.vibrate) navigator.vibrate(30)
             const touchMin = yToMin(e.touches[0].clientY)
-            const offsetMin = touchMin - startMin
-            setDragging({ booking, offsetMin, currentTop: startMin })
+            setDragging({ booking, offsetMin: touchMin - startMin, currentTop: startMin })
             didDrag.current = true
         }, 400)
     }, [yToMin])
 
     const handleTouchMove = useCallback((e: React.TouchEvent) => {
-        // Cancel long press if finger moves too much before activation
         if (longPressTimer.current && !dragging) {
             const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
-            if (dy > 10) {
-                clearTimeout(longPressTimer.current)
-                longPressTimer.current = null
-            }
+            if (dy > 10) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
         }
         if (!dragging) return
         e.preventDefault()
@@ -244,70 +250,114 @@ function DayView({ bookings, dateStr, onEventClick, onSlotClick, onEventDrop }: 
     }, [dragging, yToMin])
 
     const handleTouchEnd = useCallback(() => {
-        if (longPressTimer.current) {
-            clearTimeout(longPressTimer.current)
-            longPressTimer.current = null
-        }
+        if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
         if (dragging && onEventDrop) {
             const b = dragging.booking
-            const origStart = new Date(b.start_at)
-            const origEnd = new Date(b.end_at)
-            const durationMs = origEnd.getTime() - origStart.getTime()
+            const durationMs = new Date(b.end_at).getTime() - new Date(b.start_at).getTime()
             const newStartMin = dragging.currentTop
             const newHour = Math.floor(newStartMin / 60) + 8
             const newMin = Math.round(newStartMin % 60)
-
             const newStart = new Date(dateStr + 'T12:00:00')
             newStart.setHours(newHour, newMin, 0, 0)
             const newEnd = new Date(newStart.getTime() + durationMs)
-
             onEventDrop(b.id, newStart.toISOString(), newEnd.toISOString())
         }
         setDragging(null)
-        // Reset didDrag after a tick so click handler can check it
         setTimeout(() => { didDrag.current = false }, 50)
     }, [dragging, onEventDrop, dateStr])
 
     return (
-        <div ref={gridRef} style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: dragging ? undefined : 'touch', touchAction: dragging ? 'none' : undefined }}>
-            <div
-                style={{ position: 'relative', minHeight: HOURS.length * HOUR_HEIGHT }}
-                onClick={handleGridClick}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchEnd}
-            >
-                {/* Hour lines */}
-                {HOURS.map(hour => {
-                    const h = hour % 12 || 12
-                    const ampm = hour >= 12 ? 'PM' : 'AM'
-                    return (
-                        <div key={hour} style={{ position: 'absolute', top: (hour - 8) * HOUR_HEIGHT, left: 0, right: 0, height: HOUR_HEIGHT }}>
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, borderTop: '1px solid var(--color-glass-border)' }} />
-                            <span style={{ position: 'absolute', top: -8, left: 8, fontSize: '11px', color: 'var(--color-text-tertiary)', background: 'var(--color-bg-primary)', padding: '0 4px' }}>
-                                {h} {ampm}
-                            </span>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* Provider column headers */}
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--color-glass-border)', flexShrink: 0 }}>
+                {/* Time gutter spacer */}
+                <div style={{ width: 44, flexShrink: 0 }} />
+                {providers.map(p => (
+                    <div key={p.id} style={{
+                        flex: 1, padding: '8px 4px', textAlign: 'center',
+                        borderLeft: '1px solid var(--color-glass-border)',
+                    }}>
+                        <div style={{
+                            width: 28, height: 28, borderRadius: '50%',
+                            background: p.color || 'var(--color-accent)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'white', fontSize: '11px', fontWeight: 600,
+                            margin: '0 auto 4px',
+                        }}>
+                            {p.label.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                         </div>
-                    )
-                })}
+                        <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {p.label.split(' ')[0]}
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-                {/* Events */}
-                {bookings.map(b => {
-                    const isDraggingThis = dragging?.booking.id === b.id
-                    return (
-                        <EventBlock
-                            key={b.id}
-                            booking={b}
-                            onClick={onEventClick}
-                            left={56} right={8}
-                            isDragging={isDraggingThis}
-                            dragTop={isDraggingThis ? dragging!.currentTop : undefined}
-                            onTouchStart={(e) => handleTouchStart(e, b)}
-                        />
-                    )
-                })}
+            {/* Scrollable time grid */}
+            <div ref={scrollRef} style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: dragging ? undefined : 'touch', touchAction: dragging ? 'none' : undefined }}>
+                <div
+                    style={{ position: 'relative', minHeight: HOURS.length * HOUR_HEIGHT, display: 'flex' }}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchEnd}
+                >
+                    {/* Time gutter */}
+                    <div style={{ width: 44, flexShrink: 0, position: 'relative' }}>
+                        {HOURS.map(hour => {
+                            const h = hour % 12 || 12
+                            const ampm = hour >= 12 ? 'PM' : 'AM'
+                            return (
+                                <div key={hour} style={{ position: 'absolute', top: (hour - 8) * HOUR_HEIGHT, right: 4, fontSize: '10px', color: 'var(--color-text-tertiary)', lineHeight: 1, transform: 'translateY(-50%)' }}>
+                                    {h}{ampm}
+                                </div>
+                            )
+                        })}
+                    </div>
 
-                <NowIndicator dateStr={dateStr} />
+                    {/* Provider columns */}
+                    {providers.map(p => {
+                        const colBookings = bookingsByProvider[p.id] || []
+                        return (
+                            <div
+                                key={p.id}
+                                style={{ flex: 1, position: 'relative', borderLeft: '1px solid var(--color-glass-border)' }}
+                                onClick={(e) => {
+                                    if (didDrag.current || !onSlotClick) return
+                                    if ((e.target as HTMLElement).closest('[data-event]')) return
+                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                                    const y = e.clientY - rect.top + (scrollRef.current?.scrollTop || 0)
+                                    const min = snapToGrid((y / HOUR_HEIGHT) * 60)
+                                    onSlotClick(dateStr, minToTime(min), p.id)
+                                }}
+                            >
+                                {/* Hour lines */}
+                                {HOURS.map(hour => (
+                                    <div key={hour} style={{ position: 'absolute', top: (hour - 8) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid var(--color-glass-border)' }} />
+                                ))}
+
+                                {/* Events */}
+                                {colBookings.map(b => {
+                                    const isDraggingThis = dragging?.booking.id === b.id
+                                    return (
+                                        <EventBlock
+                                            key={b.id}
+                                            booking={b}
+                                            onClick={onEventClick}
+                                            left={2} right={2}
+                                            isDragging={isDraggingThis}
+                                            dragTop={isDraggingThis ? dragging!.currentTop : undefined}
+                                            onTouchStart={(e) => handleTouchStart(e, b)}
+                                            compact={providers.length > 2}
+                                        />
+                                    )
+                                })}
+                            </div>
+                        )
+                    })}
+
+                    {/* Now indicator across all columns */}
+                    <NowIndicator dateStr={dateStr} gutterWidth={44} />
+                </div>
             </div>
         </div>
     )
@@ -382,10 +432,11 @@ function WeekView({ weekDays, bookings, onEventClick, onDayClick }: { weekDays: 
 }
 
 /* ─── Event Block ─── */
-function EventBlock({ booking: b, onClick, left, right, isDragging, dragTop, onTouchStart }: {
+function EventBlock({ booking: b, onClick, left, right, isDragging, dragTop, onTouchStart, compact }: {
     booking: Booking; onClick: (b: Booking) => void; left: number; right: number
     isDragging?: boolean; dragTop?: number
     onTouchStart?: (e: React.TouchEvent) => void
+    compact?: boolean
 }) {
     const start = new Date(b.start_at)
     const end = new Date(b.end_at)
@@ -396,7 +447,6 @@ function EventBlock({ booking: b, onClick, left, right, isDragging, dragTop, onT
         ? [...b.booking_services].sort((a, x) => a.sort_order - x.sort_order).map(bs => bs.services?.name).join(', ')
         : (b.services?.name || '')
     const timeStr = start.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
-
     const top = isDragging && dragTop !== undefined ? dragTop : startMin
 
     return (
@@ -406,38 +456,41 @@ function EventBlock({ booking: b, onClick, left, right, isDragging, dragTop, onT
             onTouchStart={onTouchStart}
             style={{
                 position: 'absolute', top: Math.max(top, 0), left, right,
-                height: Math.max(duration, 30),
+                height: Math.max(duration, 25),
                 background: color + '22', borderLeft: `3px solid ${color}`,
-                borderRadius: '4px', padding: '4px 8px',
+                borderRadius: '4px', padding: compact ? '2px 4px' : '4px 8px',
                 cursor: isDragging ? 'grabbing' : 'pointer',
                 overflow: 'hidden', zIndex: isDragging ? 10 : 1,
                 opacity: isDragging ? 0.85 : 1,
                 boxShadow: isDragging ? '0 4px 16px rgba(0,0,0,0.3)' : 'none',
                 transition: isDragging ? 'none' : 'top 0.2s ease',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
+                userSelect: 'none', WebkitUserSelect: 'none',
             }}
         >
-            <div style={{ fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.4' }}>
+            <div style={{ fontSize: compact ? '10px' : '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.4' }}>
                 <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{b.clients?.first_name} {b.clients?.last_name}</span>
-                <span style={{ color: 'var(--color-text-tertiary)', margin: '0 4px' }}>·</span>
-                <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
-                    {isDragging ? minToTime(snapToGrid(top)).replace(/^0/, '') : timeStr} {serviceName && `· ${serviceName}`}
-                </span>
+                {!compact && (
+                    <>
+                        <span style={{ color: 'var(--color-text-tertiary)', margin: '0 4px' }}>·</span>
+                        <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
+                            {isDragging ? minToTime(snapToGrid(top)).replace(/^0/, '') : timeStr} {serviceName && `· ${serviceName}`}
+                        </span>
+                    </>
+                )}
             </div>
         </div>
     )
 }
 
 /* ─── Now Indicator ─── */
-function NowIndicator({ dateStr }: { dateStr: string }) {
+function NowIndicator({ dateStr, gutterWidth }: { dateStr: string; gutterWidth?: number }) {
     const todayStr = new Date().toLocaleDateString('en-CA')
     if (dateStr !== todayStr) return null
     const now = new Date()
     const nowMin = (now.getHours() - 8) * 60 + now.getMinutes()
     if (nowMin < 0 || nowMin > HOURS.length * HOUR_HEIGHT) return null
     return (
-        <div style={{ position: 'absolute', top: nowMin, left: 52, right: 0, height: 2, background: '#ef4444', zIndex: 2, borderRadius: 1 }}>
+        <div style={{ position: 'absolute', top: nowMin, left: gutterWidth || 52, right: 0, height: 2, background: '#ef4444', zIndex: 2, borderRadius: 1, pointerEvents: 'none' }}>
             <div style={{ position: 'absolute', left: -4, top: -3, width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
         </div>
     )
