@@ -1218,29 +1218,18 @@ export function BookingsPage() {
                             {!showNewClientForm ? (
                                 <form onSubmit={handleSaveBooking}>
                                     <div className="form-group">
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
-                                            <label className="form-label" style={{ marginBottom: 0 }}>Cliente</label>
-                                            {!editingId && (
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-secondary btn-sm"
-                                                    onClick={() => setShowNewClientForm(true)}
-                                                    style={{ padding: '4px 8px', fontSize: '12px' }}
-                                                >
-                                                    <UserPlus size={14} style={{ marginRight: 4 }} /> Nuevo
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div style={{ position: 'relative' }}>
-                                            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
-                                            <input
-                                                className="form-input"
-                                                style={{ paddingLeft: 30 }}
-                                                placeholder="Buscar cliente..."
-                                                value={clientSearch}
-                                                onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
-                                                onFocus={() => setShowClientDropdown(true)}
-                                            />
+                                        <label className="form-label">Cliente</label>
+                                        <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
+                                            <div style={{ position: 'relative', flex: 1 }}>
+                                                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }} />
+                                                <input
+                                                    className="form-input"
+                                                    style={{ paddingLeft: 30 }}
+                                                    placeholder="Buscar cliente..."
+                                                    value={clientSearch}
+                                                    onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
+                                                    onFocus={() => setShowClientDropdown(true)}
+                                                />
                                             {form.client_id && !showClientDropdown && (
                                                 <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
                                                     <span style={{ fontSize: '12px', color: 'var(--color-accent)', fontWeight: 500 }}>{clients.find(c => c.id === form.client_id)?.label}</span>
@@ -1249,18 +1238,29 @@ export function BookingsPage() {
                                                     </button>
                                                 </div>
                                             )}
-                                            {showClientDropdown && (
-                                                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', maxHeight: 180, overflowY: 'auto', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
-                                                    {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
-                                                        <button key={c.id} type="button" className="dropdown-item" style={{ fontSize: '13px' }}
-                                                            onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(''); setShowClientDropdown(false) }}>
-                                                            {c.label}
-                                                        </button>
-                                                    ))}
-                                                    {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
-                                                        <div style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>Sin resultados</div>
-                                                    )}
-                                                </div>
+                                                {showClientDropdown && (
+                                                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', maxHeight: 180, overflowY: 'auto', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+                                                        {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
+                                                            <button key={c.id} type="button" className="dropdown-item" style={{ fontSize: '13px' }}
+                                                                onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(''); setShowClientDropdown(false) }}>
+                                                                {c.label}
+                                                            </button>
+                                                        ))}
+                                                        {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).length === 0 && (
+                                                            <div style={{ padding: '10px 14px', fontSize: '13px', color: 'var(--color-text-tertiary)' }}>Sin resultados</div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {!editingId && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewClientForm(true)}
+                                                    title="Nuevo cliente"
+                                                    style={{ width: 38, height: 38, borderRadius: 8, border: 'none', background: 'var(--color-accent)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                                                >
+                                                    <Plus size={18} />
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -1268,14 +1268,14 @@ export function BookingsPage() {
                                         <label className="form-label">Servicios</label>
                                         {/* Selected services chips */}
                                         {selectedServices.length > 0 && (
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
                                                 {selectedServices.map((s, i) => (
-                                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--color-glass)', border: '1px solid var(--color-glass-border)', borderRadius: 8, padding: '5px 10px', fontSize: '13px' }}>
-                                                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.color || 'var(--color-accent)', flexShrink: 0 }} />
+                                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, background: (s.color || 'var(--color-accent)') + '18', border: `1px solid ${s.color || 'var(--color-accent)'}40`, borderRadius: 10, padding: '8px 12px', fontSize: '14px' }}>
+                                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || 'var(--color-accent)', flexShrink: 0 }} />
                                                         <span style={{ fontWeight: 500 }}>{s.label}</span>
-                                                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '12px' }}>${s.price.toLocaleString()}</span>
-                                                        <button type="button" onClick={() => setSelectedServices(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: 'var(--color-text-tertiary)', marginLeft: 2 }}>
-                                                            <X size={12} />
+                                                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: '13px' }}>${s.price.toLocaleString()}</span>
+                                                        <button type="button" onClick={() => setSelectedServices(prev => prev.filter((_, j) => j !== i))} style={{ background: 'var(--color-glass-hover)', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', borderRadius: '50%', width: 22, height: 22, marginLeft: 2, flexShrink: 0 }}>
+                                                            <X size={14} />
                                                         </button>
                                                     </div>
                                                 ))}
@@ -1375,8 +1375,8 @@ export function BookingsPage() {
                                             <CalendarDays size={16} style={{ opacity: 0.6 }} />
                                         </button>
                                         {showDateTimePicker && (
-                                            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowDateTimePicker(false)}>
-                                                <div onClick={e => e.stopPropagation()} style={{ width: '90%', maxWidth: 400 }}>
+                                            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setShowDateTimePicker(false) }}>
+                                                <div onMouseDown={e => e.stopPropagation()} style={{ width: '90%', maxWidth: 380 }}>
                                                     <DateTimePicker
                                                         selectedDate={form.date}
                                                         selectedTime={form.time}
