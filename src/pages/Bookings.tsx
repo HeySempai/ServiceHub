@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { Plus, X, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Search, List as ListIcon, Calendar as CalendarIcon, MoreVertical, Edit2, Trash2, CheckCircle, Clock, Smartphone, CalendarDays, DollarSign, AlertCircle, Sun } from 'lucide-react'
@@ -6,8 +6,10 @@ import { CalendarPicker } from '../components/CalendarPicker'
 import { ClientDetailDrawer } from '../components/ClientDetailDrawer'
 import { DateTimePicker } from '../components/DateTimePicker'
 
-import type FullCalendarType from '@fullcalendar/react'
-const FullCalendar = lazy(() => import('@fullcalendar/react'))
+import { LightCalendar } from '../components/LightCalendar'
+
+// FullCalendar — only rendered on desktop (non-touch) devices
+import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -61,7 +63,7 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 
 export function BookingsPage() {
     const { orgMember, memberLabel, memberLabelPlural } = useAuth()
-    const calendarRef = useRef<FullCalendarType>(null)
+    const calendarRef = useRef<FullCalendar>(null)
     const [detailClientId, setDetailClientId] = useState<string | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -72,26 +74,12 @@ export function BookingsPage() {
 
     // View state
     const [viewMode, setViewMode] = useState<ViewMode>('list')
-    const [calendarReady, setCalendarReady] = useState(false)
     const [calendarTitle, setCalendarTitle] = useState('')
-    const [currentCalView, setCurrentCalView] = useState<CalendarViewType>(isTouchDevice ? 'timeGridDay' : 'timeGridWeek')
+    const [currentCalView, setCurrentCalView] = useState<CalendarViewType>('timeGridWeek')
     const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null)
 
-    // On touch devices, skip interactionPlugin (drag/drop/selection) to avoid freezing
-    const calendarPlugins = useMemo(() =>
-        isTouchDevice
-            ? [dayGridPlugin, timeGridPlugin]
-            : [dayGridPlugin, timeGridPlugin, interactionPlugin],
-    [])
-
-    // Defer FullCalendar mount to avoid blocking the main thread on low-power devices
-    useEffect(() => {
-        if (viewMode === 'calendar' && !calendarReady) {
-            const id = setTimeout(() => setCalendarReady(true), 50)
-            return () => clearTimeout(id)
-        }
-        if (viewMode !== 'calendar') setCalendarReady(false)
-    }, [viewMode])
+    // Light calendar date for touch devices
+    const [lightCalDate, setLightCalDate] = useState(() => new Date())
 
     // List view filters
     const [searchQuery, setSearchQuery] = useState('')
@@ -665,7 +653,7 @@ export function BookingsPage() {
                         </button>
                     </div>
 
-                    {viewMode === 'calendar' && (
+                    {viewMode === 'calendar' && !isTouchDevice && (
                         <div style={{ display: 'flex', gap: '4px' }}>
                             <button className="btn-icon-clear" style={{ height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', padding: 0, cursor: 'pointer', background: 'transparent' }} onClick={() => { calendarRef.current?.getApi().prev(); updateTitle() }}>
                                 <ChevronLeft size={20} color="var(--color-text-primary)" />
@@ -677,13 +665,13 @@ export function BookingsPage() {
                     )}
 
                     <h2 style={{ fontSize: '22px', fontWeight: 400, margin: 0, minWidth: '200px', textTransform: 'capitalize' }}>
-                        {viewMode === 'calendar' ? calendarTitle : 'Todas las Citas'}
+                        {viewMode === 'calendar' ? (isTouchDevice ? 'Citas' : calendarTitle) : 'Todas las Citas'}
                     </h2>
                 </div>
 
                 {/* Right Controls: Navigation and Actions */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-                    {viewMode === 'calendar' && (
+                    {viewMode === 'calendar' && !isTouchDevice && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <button
                                 className="btn btn-secondary"
@@ -739,7 +727,7 @@ export function BookingsPage() {
                         </div>
                     )}
 
-                    {viewMode === 'calendar' ? (
+                    {viewMode === 'calendar' && !isTouchDevice ? (
                         <div style={{ position: 'relative' }} ref={dropdownRef}>
                             <button
                                 className="btn btn-secondary"
@@ -785,87 +773,93 @@ export function BookingsPage() {
             {loading ? (
                 <div className="loading-screen" style={{ flex: 1 }}><div className="spinner" /></div>
             ) : viewMode === 'calendar' ? (
-                !calendarReady ? (
-                    <div className="loading-screen" style={{ flex: 1 }}><div className="spinner" /></div>
+                isTouchDevice ? (
+                    <div key="light-calendar" className="card animate-in" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-primary)' }}>
+                        <LightCalendar
+                            date={lightCalDate}
+                            bookings={bookings}
+                            onPrev={() => setLightCalDate(d => { const n = new Date(d); n.setDate(n.getDate() - 1); return n })}
+                            onNext={() => setLightCalDate(d => { const n = new Date(d); n.setDate(n.getDate() + 1); return n })}
+                            onToday={() => setLightCalDate(new Date())}
+                            onEventClick={(b) => openEditBooking(b)}
+                            showCompleted={showCompleted}
+                            providerFilter={calProviderFilter}
+                        />
+                    </div>
                 ) : (
                 <div key="calendar" className="card animate-in" style={{ flex: 1, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--color-bg-primary)' }}>
                     <div className="calendar-container" style={{ flex: 1, padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: 'transparent' }}>
-                        <Suspense fallback={<div className="loading-screen" style={{ flex: 1 }}><div className="spinner" /></div>}>
-                            <FullCalendar
-                                ref={calendarRef}
-                                plugins={calendarPlugins}
-                                initialView={currentCalView}
-                                headerToolbar={false}
-                                locale="es"
-                                allDaySlot={false}
-                                slotMinTime="08:00:00"
-                                slotMaxTime="22:00:00"
-                                slotDuration={isTouchDevice ? '01:00:00' : '00:30:00'}
-                                weekends={showWeekends}
-                                dayMaxEvents={3}
-                                dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
-                                dayHeaderContent={dayHeaderRenderer}
-                                slotLabelContent={slotLabelRenderer}
-                                events={events}
-                                eventClick={(info) => {
-                                    openEditBooking(info.event.extendedProps.raw)
-                                }}
-                                {...(!isTouchDevice ? {
-                                    dateClick: (arg: any) => {
-                                        const dateStr = arg.dateStr.split('T')[0]
-                                        const timeStr = arg.dateStr.includes('T') ? arg.dateStr.split('T')[1].substring(0, 5) : '09:00'
-                                        openNewBooking(dateStr, timeStr)
-                                    },
-                                    eventDrop: async (info: any) => {
-                                        const newStart = info.event.start?.toISOString()
-                                        const newEnd = info.event.end?.toISOString()
+                        <FullCalendar
+                            ref={calendarRef}
+                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                            initialView={currentCalView}
+                            headerToolbar={false}
+                            locale="es"
+                            allDaySlot={false}
+                            slotMinTime="08:00:00"
+                            slotMaxTime="22:00:00"
+                            weekends={showWeekends}
+                            dayMaxEvents={3}
+                            dayHeaderFormat={{ weekday: 'short', day: 'numeric' }}
+                            dayHeaderContent={dayHeaderRenderer}
+                            slotLabelContent={slotLabelRenderer}
+                            events={events}
+                            dateClick={(arg) => {
+                                const dateStr = arg.dateStr.split('T')[0]
+                                const timeStr = arg.dateStr.includes('T') ? arg.dateStr.split('T')[1].substring(0, 5) : '09:00'
+                                openNewBooking(dateStr, timeStr)
+                            }}
+                            eventClick={(info) => {
+                                openEditBooking(info.event.extendedProps.raw)
+                            }}
+                            eventDrop={async (info) => {
+                                const newStart = info.event.start?.toISOString()
+                                const newEnd = info.event.end?.toISOString()
 
-                                        if (newStart && newEnd) {
-                                            const oldStart = info.oldEvent.start?.toISOString()
-                                            const oldEnd = info.oldEvent.end?.toISOString()
+                                if (newStart && newEnd) {
+                                    const oldStart = info.oldEvent.start?.toISOString()
+                                    const oldEnd = info.oldEvent.end?.toISOString()
 
-                                            if (oldStart && oldEnd) {
-                                                setLastBookingState({ id: info.event.id, start: oldStart, end: oldEnd })
-                                            }
+                                    if (oldStart && oldEnd) {
+                                        setLastBookingState({ id: info.event.id, start: oldStart, end: oldEnd })
+                                    }
 
-                                            setToast({ message: 'Guardando...', visible: true, isSaving: true })
-                                            if (toastTimeout) clearTimeout(toastTimeout)
+                                    setToast({ message: 'Guardando...', visible: true, isSaving: true })
+                                    if (toastTimeout) clearTimeout(toastTimeout)
 
-                                            setBookings(prev => prev.map(b =>
-                                                b.id === info.event.id
-                                                    ? { ...b, start_at: newStart, end_at: newEnd }
-                                                    : b
-                                            ))
+                                    setBookings(prev => prev.map(b =>
+                                        b.id === info.event.id
+                                            ? { ...b, start_at: newStart, end_at: newEnd }
+                                            : b
+                                    ))
 
-                                            const { error } = await supabase.from('bookings').update({
-                                                start_at: newStart,
-                                                end_at: newEnd
-                                            }).eq('id', info.event.id)
+                                    const { error } = await supabase.from('bookings').update({
+                                        start_at: newStart,
+                                        end_at: newEnd
+                                    }).eq('id', info.event.id)
 
-                                            if (error) {
-                                                console.error('Error updating booking:', error)
-                                                setToast({ message: 'Error al guardar', visible: true })
-                                                fetchBookings()
-                                            } else {
-                                                const timeStr = info.event.start?.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
-                                                setToast({ message: `Se reprogramó el evento para las ${timeStr}`, visible: true, isSaving: false })
+                                    if (error) {
+                                        console.error('Error updating booking:', error)
+                                        setToast({ message: 'Error al guardar', visible: true })
+                                        fetchBookings()
+                                    } else {
+                                        const timeStr = info.event.start?.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                                        setToast({ message: `Se reprogramó el evento para las ${timeStr}`, visible: true, isSaving: false })
 
-                                                const timeout = setTimeout(() => {
-                                                    setToast(prev => ({ ...prev, visible: false }))
-                                                }, 5000)
-                                                setToastTimeout(timeout)
-                                            }
-                                        }
-                                    },
-                                    editable: true,
-                                    selectable: true,
-                                } : {})}
-                                height="100%"
-                                expandRows={true}
-                                nowIndicator={true}
-                                datesSet={updateTitle}
-                            />
-                        </Suspense>
+                                        const timeout = setTimeout(() => {
+                                            setToast(prev => ({ ...prev, visible: false }))
+                                        }, 5000)
+                                        setToastTimeout(timeout)
+                                    }
+                                }
+                            }}
+                            height="100%"
+                            expandRows={true}
+                            nowIndicator={true}
+                            editable={true}
+                            selectable={true}
+                            datesSet={updateTitle}
+                        />
                     </div>
                 </div>
                 )
