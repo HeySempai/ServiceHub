@@ -85,7 +85,7 @@ export function BookingsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [providerFilter, setProviderFilter] = useState('all')
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA') // yyyy-MM-dd in local timezone
     const [startDate, setStartDate] = useState(today)
     const [endDate, setEndDate] = useState(today)
 
@@ -574,7 +574,7 @@ export function BookingsPage() {
         const matchesStatus = statusFilter === 'all' || b.status === statusFilter
         const matchesProvider = providerFilter === 'all' || b.provider_id === providerFilter
 
-        const bookingDate = b.start_at.split('T')[0]
+        const bookingDate = new Date(b.start_at).toLocaleDateString('en-CA') // local date
         const matchesStart = !startDate || bookingDate >= startDate
         const matchesEnd = !endDate || bookingDate <= endDate
 
