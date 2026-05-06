@@ -96,6 +96,9 @@ export function InvoicesPage() {
     })
     const [lines, setLines] = useState<InvoiceLine[]>([emptyLine()])
 
+    // Service color map
+    const [serviceColors, setServiceColors] = useState<Record<string, string>>({})
+
     // Sorting
     type SortField = 'date' | 'client' | 'total' | 'balance'
     const [sortField, setSortField] = useState<SortField>('date')
@@ -109,7 +112,7 @@ export function InvoicesPage() {
 
     const fetchAll = async () => {
         if (!orgId) return
-        const [invRes, clientRes, pmRes] = await Promise.all([
+        const [invRes, clientRes, pmRes, svcRes] = await Promise.all([
             supabase.from('invoices')
                 .select('id, invoice_number, status, subtotal, tax_total, total, amount_paid, balance_due, issued_at, notes, client_rfc, requires_cfdi, client_id, clients(first_name, last_name, rfc), invoice_lines(description, quantity, unit_price, tax_rate, tax, total, sort_order)')
                 .eq('org_id', orgId)
@@ -119,10 +122,15 @@ export function InvoicesPage() {
                 .eq('org_id', orgId).eq('active', true).order('last_name'),
             supabase.from('payment_methods')
                 .select('id, name').eq('org_id', orgId).eq('active', true).order('sort_order'),
+            supabase.from('services')
+                .select('name, color').eq('org_id', orgId),
         ])
         setInvoices((invRes.data as unknown as Invoice[]) || [])
         setClients(clientRes.data || [])
         setPaymentMethods(pmRes.data || [])
+        const colorMap: Record<string, string> = {}
+        svcRes.data?.forEach((s: any) => { if (s.color) colorMap[s.name] = s.color })
+        setServiceColors(colorMap)
         setLoading(false)
     }
 
@@ -377,7 +385,7 @@ export function InvoicesPage() {
                                         </td>
                                         <td style={{ padding: '10px', fontSize: '12px', color: 'var(--color-text-secondary)', maxWidth: 140 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-accent)', flexShrink: 0 }} />
+                                                <div style={{ width: 6, height: 6, borderRadius: '50%', background: serviceColors[firstLine] || 'var(--color-accent)', flexShrink: 0 }} />
                                                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{serviceLabel}</span>
                                             </div>
                                         </td>
