@@ -1251,7 +1251,7 @@ export function BookingsPage() {
                                                     <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--color-bg-secondary)', border: '1px solid var(--color-glass-border)', borderRadius: '8px', maxHeight: 180, overflowY: 'auto', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
                                                         {clients.filter(c => !clientSearch || c.label.toLowerCase().includes(clientSearch.toLowerCase())).map(c => (
                                                             <button key={c.id} type="button" className="dropdown-item" style={{ fontSize: '13px' }}
-                                                                onClick={() => { setForm({ ...form, client_id: c.id }); setClientSearch(''); setShowClientDropdown(false) }}>
+                                                                onMouseDown={(e) => { e.preventDefault(); setForm({ ...form, client_id: c.id }); setClientSearch(''); setShowClientDropdown(false) }}>
                                                                 {c.label}
                                                             </button>
                                                         ))}
