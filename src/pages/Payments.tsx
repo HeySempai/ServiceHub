@@ -414,15 +414,9 @@ export function PaymentsPage() {
                                             {isSaldoFavor ? '—' : (p.notes || '—')}
                                         </td>
                                         <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, fontSize: '13px',
-                                            color: isSaldoFavor ? 'var(--color-text-tertiary)'
-                                                : (() => {
+                                            color: (() => {
                                                     const totalAllocated = allocs.reduce((s, a) => s + a.amount_allocated, 0)
-                                                    if (p.amount > totalAllocated && totalAllocated > 0) return '#3b82f6'
-                                                    const allInvoicesPaid = allocs.every(a => {
-                                                        const inv = invoices.find(inv => inv.id === a.invoice_id)
-                                                        return inv?.status === 'paid'
-                                                    })
-                                                    if (allInvoicesPaid) return 'var(--color-text-tertiary)'
+                                                    if (totalAllocated >= p.amount) return 'var(--color-text-tertiary)'
                                                     return 'var(--color-success)'
                                                 })()
                                         }}>
@@ -457,7 +451,7 @@ export function PaymentsPage() {
                                 <td colSpan={6} style={{ padding: '10px', color: 'var(--color-text-tertiary)', fontSize: '12px', fontWeight: 500 }}>
                                     Total {hasFilters ? 'filtrado' : 'general'}
                                 </td>
-                                <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--color-success)' }}>
+                                <td style={{ padding: '10px', textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--color-text-primary)' }}>
                                     {fmt(totalFiltered)}
                                 </td>
                                 <td />
