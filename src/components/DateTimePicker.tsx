@@ -176,9 +176,10 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
             {/* Time side */}
             <div style={{
-                width: 90,
+                width: 95,
                 borderLeft: '1px solid var(--color-glass-border)',
                 display: 'flex', flexDirection: 'column',
+                maxHeight: 340,
             }}>
                 <div style={{ padding: '14px 8px 8px', fontSize: '11px', fontWeight: 600, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
                     Hora

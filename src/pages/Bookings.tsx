@@ -186,7 +186,7 @@ export function BookingsPage() {
         const [c, s, p, pm] = await Promise.all([
             supabase.from('clients').select('id, first_name, last_name').eq('org_id', orgId).eq('active', true).order('last_name'),
             supabase.from('services').select('id, name, duration_min, price, color').eq('org_id', orgId).eq('active', true).order('sort_order'),
-            supabase.from('org_members').select('id, display_name, color').eq('org_id', orgId).eq('can_be_booked', true).eq('active', true),
+            supabase.from('org_members').select('id, display_name, color').eq('org_id', orgId).eq('can_be_booked', true).eq('active', true).order('sort_order'),
             supabase.from('payment_methods').select('id, name').eq('org_id', orgId).order('sort_order'),
         ])
         setClients(c.data?.map((x) => ({ id: x.id, label: `${x.first_name} ${x.last_name}` })) || [])
@@ -1300,7 +1300,6 @@ export function BookingsPage() {
                                                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || 'var(--color-accent)', flexShrink: 0 }} />
                                                     <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>{s.label}</span>
                                                     <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>${s.price.toLocaleString()}</span>
-                                                    <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>{s.duration_min}m</span>
                                                 </button>
                                             ))}
                                             {services.filter(s => !selectedServices.some(ss => ss.id === s.id)).length === 0 && (
@@ -1376,15 +1375,17 @@ export function BookingsPage() {
                                             <CalendarDays size={16} style={{ opacity: 0.6 }} />
                                         </button>
                                         {showDateTimePicker && (
-                                            <div style={{ marginTop: 8 }}>
-                                                <DateTimePicker
-                                                    selectedDate={form.date}
-                                                    selectedTime={form.time}
-                                                    onDateTimeSelect={(date, time) => {
-                                                        setForm({ ...form, date, time })
-                                                    }}
-                                                    onClose={() => setShowDateTimePicker(false)}
-                                                />
+                                            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowDateTimePicker(false)}>
+                                                <div onClick={e => e.stopPropagation()} style={{ width: '90%', maxWidth: 400 }}>
+                                                    <DateTimePicker
+                                                        selectedDate={form.date}
+                                                        selectedTime={form.time}
+                                                        onDateTimeSelect={(date, time) => {
+                                                            setForm({ ...form, date, time })
+                                                        }}
+                                                        onClose={() => setShowDateTimePicker(false)}
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                     </div>
