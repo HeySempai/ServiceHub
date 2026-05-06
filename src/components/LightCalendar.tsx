@@ -418,11 +418,12 @@ function EventBlock({ booking: b, onClick, left, right, isDragging, dragTop, onT
                 WebkitUserSelect: 'none',
             }}
         >
-            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {b.clients?.first_name} {b.clients?.last_name}
-            </div>
-            <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {isDragging ? minToTime(snapToGrid(top)).replace(/^0/, '') : timeStr} · {serviceName}
+            <div style={{ fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.4' }}>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{b.clients?.first_name}</span>
+                <span style={{ color: 'var(--color-text-tertiary)', margin: '0 4px' }}>·</span>
+                <span style={{ color: 'var(--color-text-secondary)', fontSize: '11px' }}>
+                    {isDragging ? minToTime(snapToGrid(top)).replace(/^0/, '') : timeStr} {serviceName && `· ${serviceName}`}
+                </span>
             </div>
         </div>
     )
